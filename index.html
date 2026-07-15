@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Centauri Credit — FICO Command Center</title>
+<meta name="theme-color" content="#0b0d12">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Centauri Credit">
+<style>
+/* ============ CENTAURI CREDIT — DESIGN TOKENS ============ */
+:root, :root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#070a14; --page-2:#0b1020;
+  --surface-1:#141b33; --glass:rgba(20,27,51,.62); --glass-2:rgba(26,34,62,.55);
+  --glass-solid:#161d38; --glass-raise:rgba(38,48,86,.55);
+  --ink-1:#f2f4fa; --ink-2:#a8b0c8; --ink-3:#6b7390;
+  --hairline:rgba(255,255,255,.08); --hairline-2:rgba(255,255,255,.14);
+  --grid:#262c45; --baseline:#343c5c;
+  /* Bureau series (validated dark palette) */
+  --exp:#199e70; --equ:#3987e5; --tu:#a855f7;
+  /* Status (fixed) */
+  --good:#0ca30c; --good-text:#2ecc71; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b; --crit-text:#f0716f;
+  --info:#3987e5; --accent:#7aa8ff; --gold:#fab219;
+  --shadow:0 18px 50px rgba(0,0,0,.45);
+  --r-lg:22px; --r-md:16px; --r-sm:10px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --page:#eef1f8; --page-2:#f7f8fc;
+  --surface-1:#ffffff; --glass:rgba(255,255,255,.78); --glass-2:rgba(255,255,255,.6);
+  --glass-solid:#ffffff; --glass-raise:rgba(235,239,250,.9);
+  --ink-1:#101322; --ink-2:#4a5169; --ink-3:#828aa3;
+  --hairline:rgba(16,19,34,.1); --hairline-2:rgba(16,19,34,.16);
+  --grid:#e3e6f0; --baseline:#c6cbdd;
+  --exp:#0d7a54; --equ:#2a78d6; --tu:#8b3fe0;
+  --good:#0a8a0a; --good-text:#0a8a0a; --warn:#b97f00; --serious:#c05a32; --crit:#c62f2f; --crit-text:#c62f2f;
+  --info:#2a78d6; --accent:#2a63d6; --gold:#b97f00;
+  --shadow:0 18px 40px rgba(30,40,80,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--sans); background:var(--page); color:var(--ink-1);
+  min-height:100vh; line-height:1.45; overflow-x:hidden;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(1100px 600px at 85% -10%, rgba(57,135,229,.16), transparent 60%),
+    radial-gradient(900px 550px at -10% 25%, rgba(168,85,247,.12), transparent 55%),
+    radial-gradient(800px 600px at 55% 115%, rgba(25,158,112,.10), transparent 55%),
+    linear-gradient(160deg,var(--page) 0%,var(--page-2) 100%);
+}
+:root[data-theme="light"] body::before{
+  background:
+    radial-gradient(1100px 600px at 85% -10%, rgba(42,120,214,.12), transparent 60%),
+    radial-gradient(900px 550px at -10% 25%, rgba(139,63,224,.09), transparent 55%),
+    linear-gradient(160deg,var(--page) 0%,var(--page-2) 100%);
+}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink-1);background:var(--glass-2);border:1px solid var(--hairline-2);border-radius:var(--r-sm);padding:9px 12px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+::placeholder{color:var(--ink-3)}
+h1,h2,h3{font-weight:650;letter-spacing:-.01em}
+a{color:var(--accent)}
+
+/* ============ LAYOUT ============ */
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:232px;flex-shrink:0;position:sticky;top:0;height:100vh;padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--hairline);
+  background:rgba(10,14,28,.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+:root[data-theme="light"] .sidebar{background:rgba(255,255,255,.55)}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px}
+.brand-logo{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:19px;
+  background:linear-gradient(135deg,#3987e5,#a855f7);box-shadow:0 6px 18px rgba(88,101,242,.35)}
+.brand-name{font-size:15.5px;font-weight:700;line-height:1.15}
+.brand-sub{font-size:10.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.nav-btn{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;
+  font-size:13.5px;font-weight:520;color:var(--ink-2);text-align:left;width:100%;transition:background .15s,color .15s;
+}
+.nav-btn:hover{background:var(--glass-raise);color:var(--ink-1)}
+.nav-btn.active{background:linear-gradient(135deg,rgba(57,135,229,.22),rgba(168,85,247,.18));color:var(--ink-1);font-weight:600}
+.nav-btn .ico{width:22px;text-align:center;font-size:15px}
+.nav-spacer{flex:1}
+.sidebar-foot{font-size:10.5px;color:var(--ink-3);padding:10px 12px;line-height:1.5}
+.main{flex:1;min-width:0;padding:calc(22px + env(safe-area-inset-top)) clamp(14px,3vw,34px) 96px}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.topbar h1{font-size:clamp(19px,2.4vw,25px)}
+.topbar .sub{color:var(--ink-3);font-size:12.5px;margin-top:2px}
+.top-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.searchbox{position:relative;width:min(320px,42vw)}
+.searchbox input{padding-left:34px;background:var(--glass);backdrop-filter:blur(12px)}
+.searchbox .mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-size:14px}
+.icon-btn{
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:16px;
+  background:var(--glass);border:1px solid var(--hairline);transition:background .15s;
+}
+.icon-btn:hover{background:var(--glass-raise)}
+
+/* ============ CARDS & GLASS ============ */
+.card{
+  background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:20px;box-shadow:var(--shadow);
+}
+.card h3{font-size:14.5px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.card h3 .more{margin-left:auto;font-size:12px;color:var(--accent);font-weight:550;cursor:pointer}
+.grid{display:grid;gap:16px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.section{margin-bottom:20px}
+.sec-title{font-size:13px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);margin:26px 0 12px;display:flex;align-items:center;gap:8px}
+.sec-title .more{margin-left:auto;text-transform:none;letter-spacing:0;font-size:12px;color:var(--accent);cursor:pointer;font-weight:550}
+
+/* score cards */
+.score-card{position:relative;overflow:hidden}
+.score-card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--bc)}
+.score-card .bureau{display:flex;align-items:center;gap:8px;font-weight:650;font-size:13.5px}
+.score-card .bdot{width:9px;height:9px;border-radius:50%;background:var(--bc)}
+.score-big{font-size:46px;font-weight:700;letter-spacing:-.02em;line-height:1;margin:10px 0 2px}
+.score-meta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink-2);flex-wrap:wrap}
+.delta{font-weight:650;font-size:12px;padding:2px 8px;border-radius:99px}
+.delta.up{color:var(--good-text);background:rgba(12,163,12,.14)}
+.delta.down{color:var(--crit-text);background:rgba(208,59,59,.14)}
+.delta.flat{color:var(--ink-2);background:var(--glass-raise)}
+.score-foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3);margin-top:10px;gap:6px;flex-wrap:wrap}
+.mini-goal{margin-top:12px}
+.mini-goal .lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-bottom:5px}
+.meter{height:7px;border-radius:99px;background:var(--track,rgba(122,168,255,.16));overflow:hidden}
+.meter>i{display:block;height:100%;border-radius:99px;background:var(--fill,var(--accent));transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.conf{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-3)}
+.conf .pips{display:inline-flex;gap:2px}
+.conf .pips i{width:4px;height:9px;border-radius:2px;background:var(--glass-raise)}
+.conf .pips i.on{background:var(--accent)}
+
+/* health ring */
+.ring-wrap{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.ring-svg{flex-shrink:0}
+.ring-center{position:relative;width:190px;height:190px;display:grid;place-items:center}
+.ring-center svg{position:absolute;inset:0}
+.ring-label{text-align:center;position:relative;z-index:1}
+.ring-label .pct{font-size:38px;font-weight:700;letter-spacing:-.02em}
+.ring-label .st{font-size:13px;font-weight:600;margin-top:2px}
+.ring-label .cap{font-size:10.5px;color:var(--ink-3);margin-top:2px}
+.ring-tips{flex:1;min-width:220px;display:flex;flex-direction:column;gap:9px}
+.tip-row{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);align-items:flex-start}
+.tip-row .ti{flex-shrink:0}
+
+/* factor cards */
+.factor{cursor:pointer;transition:transform .15s, border-color .15s}
+.factor:hover{transform:translateY(-2px);border-color:var(--hairline-2)}
+.factor .fh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:650}
+.factor .weight{margin-left:auto;font-size:10.5px;color:var(--ink-3);background:var(--glass-raise);padding:2px 7px;border-radius:99px;white-space:nowrap}
+.factor .rate{font-size:19px;font-weight:700;margin:8px 0 2px}
+.factor .fsub{font-size:11px;color:var(--ink-3);line-height:1.45}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:650;padding:2.5px 9px;border-radius:99px}
+.badge.good{color:var(--good-text);background:rgba(12,163,12,.13)}
+.badge.warn{color:var(--warn);background:rgba(250,178,25,.12)}
+.badge.serious{color:var(--serious);background:rgba(236,131,90,.13)}
+.badge.crit{color:var(--crit-text);background:rgba(208,59,59,.14)}
+.badge.info{color:var(--accent);background:rgba(122,168,255,.13)}
+.badge.neutral{color:var(--ink-2);background:var(--glass-raise)}
+
+/* tables & lists */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--hairline)}
+.tbl td{padding:11px 10px;border-bottom:1px solid var(--hairline);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr{cursor:pointer;transition:background .12s}
+.tbl tbody tr:hover{background:var(--glass-raise)}
+.num{font-variant-numeric:tabular-nums}
+.acct-name{display:flex;align-items:center;gap:10px;font-weight:600}
+.acct-logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex-shrink:0;background:var(--glass-raise);border:1px solid var(--hairline)}
+.acct-sub{font-size:11px;color:var(--ink-3);font-weight:450}
+.util-cell{min-width:110px}
+.util-cell .lbl{font-size:11px;margin-bottom:4px;display:flex;justify-content:space-between}
+
+/* timeline */
+.tl{position:relative;padding-left:24px}
+.tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:1px;background:var(--hairline-2)}
+.tl-item{position:relative;padding:0 0 18px 12px}
+.tl-item:last-child{padding-bottom:2px}
+.tl-dot{position:absolute;left:-24px;top:2px;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:9px;background:var(--glass-solid);border:1px solid var(--hairline-2)}
+.tl-date{font-size:10.5px;color:var(--ink-3);letter-spacing:.03em}
+.tl-txt{font-size:13px;margin-top:1px}
+.tl-txt b{font-weight:640}
+.tl-tag{font-size:10px;color:var(--ink-3)}
+
+/* tasks */
+.task-row{display:flex;gap:12px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--hairline)}
+.task-row:last-child{border-bottom:none}
+.task-check{width:21px;height:21px;border-radius:7px;border:1.5px solid var(--hairline-2);flex-shrink:0;display:grid;place-items:center;font-size:12px;color:#fff;margin-top:1px;transition:all .15s}
+.task-check.done{background:var(--good);border-color:var(--good)}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:13.5px;font-weight:560}
+.task-row.done .task-title{text-decoration:line-through;color:var(--ink-3)}
+.task-meta{display:flex;gap:7px;margin-top:5px;flex-wrap:wrap;align-items:center;font-size:10.5px;color:var(--ink-3)}
+.prio{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.04em}
+.prio.high{background:rgba(208,59,59,.16);color:var(--crit-text)}
+.prio.med{background:rgba(250,178,25,.13);color:var(--warn)}
+.prio.low{background:rgba(122,168,255,.12);color:var(--accent)}
+.impact-chip{font-size:10px;font-weight:650;color:var(--good-text);background:rgba(12,163,12,.12);padding:2px 7px;border-radius:99px}
+
+/* suggestions */
+.sugg{display:flex;gap:13px;padding:14px;border-radius:var(--r-md);background:var(--glass-2);border:1px solid var(--hairline);margin-bottom:10px}
+.sugg .rank{font-size:18px;flex-shrink:0}
+.sugg-title{font-size:13.5px;font-weight:640}
+.sugg-body{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.sugg-meta{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.sugg-actions{margin-top:9px;display:flex;gap:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:8px 15px;border-radius:11px;transition:all .15s;border:1px solid var(--hairline-2);background:var(--glass-raise);color:var(--ink-1)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:linear-gradient(135deg,#2a63d6,#7b3ff0);border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(88,101,242,.3)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 11px;font-size:11.5px;border-radius:9px}
+.btn.danger{color:var(--crit-text);border-color:rgba(208,59,59,.3)}
+
+/* goals */
+.goal-card .gh{display:flex;align-items:center;gap:9px;font-weight:650;font-size:14px}
+.goal-pct{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent)}
+.goal-sub{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.goal-next{font-size:11.5px;color:var(--ink-2);margin-top:9px;display:flex;gap:7px;align-items:flex-start}
+
+/* contacts */
+.contact-card .ch{display:flex;gap:11px;align-items:center}
+.contact-card .cb{font-size:12px;color:var(--ink-2);margin-top:10px;display:grid;gap:5px}
+.contact-card .cb a{text-decoration:none}
+.crow{display:flex;gap:8px;align-items:center}
+.crow .ci{width:18px;text-align:center;flex-shrink:0}
+
+/* chat */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:420px}
+.chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:6px 2px 14px}
+.msg{max-width:82%;padding:11px 15px;border-radius:16px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.msg.ai{background:var(--glass-2);border:1px solid var(--hairline);align-self:flex-start;border-bottom-left-radius:5px}
+.msg.me{background:linear-gradient(135deg,#2a63d6,#7b3ff0);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+.msg .mtag{display:block;font-size:10px;opacity:.65;margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase}
+.chat-input{display:flex;gap:9px;padding-top:12px;border-top:1px solid var(--hairline)}
+.chat-input input{flex:1}
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:9px 0 2px}
+.chip{font-size:11px;padding:5px 11px;border-radius:99px;background:var(--glass-raise);border:1px solid var(--hairline);color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{color:var(--ink-1);border-color:var(--accent)}
+
+/* simulator */
+.sim-controls{display:grid;gap:14px}
+.sim-row{display:grid;gap:6px}
+.sim-row label{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between}
+.sim-row label b{color:var(--ink-1)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:99px;background:var(--glass-raise);padding:0;border:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:#fff;border:5px solid var(--accent);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.sim-toggle{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.sim-toggle input{width:auto}
+.sim-result{text-align:center;padding:10px 0 4px}
+.sim-result .snum{font-size:52px;font-weight:700;letter-spacing:-.02em}
+.sim-result .sd{font-size:13px;font-weight:650;margin-top:2px}
+.est-note{font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5;text-align:center}
+
+/* files */
+.dropzone{border:1.5px dashed var(--hairline-2);border-radius:var(--r-lg);padding:34px 20px;text-align:center;color:var(--ink-2);transition:all .2s;cursor:pointer}
+.dropzone.drag{border-color:var(--accent);background:rgba(122,168,255,.06)}
+.dz-ico{font-size:30px;margin-bottom:8px}
+.file-row{display:flex;gap:11px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--hairline);font-size:13px}
+.file-row:last-child{border-bottom:none}
+.file-ico{width:34px;height:34px;border-radius:10px;background:var(--glass-raise);display:grid;place-items:center;font-size:15px;flex-shrink:0}
+
+/* modal */
+.modal-veil{position:fixed;inset:0;background:rgba(4,6,14,.66);backdrop-filter:blur(6px);z-index:60;display:grid;place-items:center;padding:18px;animation:fade .18s}
+.modal{width:min(560px,100%);max-height:88vh;overflow-y:auto;background:var(--glass-solid);border:1px solid var(--hairline-2);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow)}
+.modal h2{font-size:16.5px;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.modal h2 .x{margin-left:auto;font-size:18px;color:var(--ink-3);cursor:pointer}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-grid .full{grid-column:1/-1}
+.fld label{display:block;font-size:11px;color:var(--ink-3);margin-bottom:4px;font-weight:550}
+.modal-foot{display:flex;gap:9px;justify-content:flex-end;margin-top:17px}
+
+/* search overlay */
+.search-hit{padding:11px 13px;border-radius:12px;cursor:pointer;display:flex;gap:11px;align-items:center;font-size:13px}
+.search-hit:hover,.search-hit.sel{background:var(--glass-raise)}
+.search-hit .sh-t{font-weight:600}
+.search-hit .sh-s{font-size:11px;color:var(--ink-3)}
+.search-hit .sh-k{margin-left:auto;font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0}
+
+/* toast */
+.toasts{position:fixed;bottom:22px;right:22px;z-index:90;display:flex;flex-direction:column;gap:9px;max-width:min(340px,86vw)}
+.toast{background:var(--glass-solid);border:1px solid var(--hairline-2);border-left:3px solid var(--accent);border-radius:14px;padding:12px 15px;font-size:12.5px;box-shadow:var(--shadow);animation:slideIn .25s cubic-bezier(.2,.8,.2,1)}
+.toast.good{border-left-color:var(--good)}
+.toast.warn{border-left-color:var(--warn)}
+.toast.crit{border-left-color:var(--crit)}
+.toast b{display:block;font-size:12.5px;margin-bottom:1px}
+.toast span{color:var(--ink-2);font-size:11.5px}
+
+/* tooltip for charts */
+.viz-tip{position:fixed;z-index:80;pointer-events:none;background:var(--glass-solid);border:1px solid var(--hairline-2);border-radius:11px;padding:9px 12px;font-size:11.5px;box-shadow:var(--shadow);display:none;min-width:130px}
+.viz-tip .vt-d{color:var(--ink-3);font-size:10px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.vt-row{display:flex;align-items:center;gap:7px;margin-top:3px}
+.vt-row .sw{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.vt-row .vv{margin-left:auto;font-weight:650;font-variant-numeric:tabular-nums}
+
+/* celebration */
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:95;overflow:hidden}
+.confetti i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation:drop 2.6s ease-in forwards}
+@keyframes drop{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
+@keyframes fade{from{opacity:0}}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}}
+@keyframes pop{0%{transform:scale(.94);opacity:0}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .25s cubic-bezier(.2,.8,.2,1)}
+
+/* empty state */
+.empty{padding:30px 14px;text-align:center;color:var(--ink-3);font-size:13px}
+.empty .e-ico{font-size:28px;margin-bottom:7px}
+
+/* mobile */
+.bottom-nav{display:none}
+@media(max-width:1060px){
+  .g5{grid-template-columns:repeat(3,1fr)}
+  .g3{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:760px){
+  .sidebar{display:none}
+  .main{padding:16px 14px 110px}
+  .g3,.g2,.g5{grid-template-columns:1fr}
+  .g5{grid-template-columns:repeat(2,1fr)}
+  .searchbox{width:100%;order:5}
+  .topbar{gap:10px}
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;
+    background:rgba(10,14,28,.82);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    border-top:1px solid var(--hairline);padding:7px 4px calc(7px + env(safe-area-inset-bottom));
+    justify-content:flex-start;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  .bottom-nav::-webkit-scrollbar{display:none}
+  :root[data-theme="light"] .bottom-nav{background:rgba(255,255,255,.85)}
+  .bn-btn{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--ink-3);padding:4px 8px;border-radius:10px;min-width:52px}
+  .bn-btn .ico{font-size:18px}
+  .bn-btn.active{color:var(--accent)}
+  .form-grid{grid-template-columns:1fr}
+  .chat-wrap{height:calc(100vh - 250px)}
+  .tbl .hide-m{display:none}
+  .score-big{font-size:38px}
+}
+@media(min-width:761px) and (max-width:1060px){ .tbl .hide-t{display:none} }
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--glass-raise);border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="topbar" id="topbar"></div>
+    <div id="view"></div>
+  </main>
+</div>
+<nav class="bottom-nav" id="bottomnav"></nav>
+<div class="toasts" id="toasts"></div>
+<div class="viz-tip" id="viztip"></div>
+<div id="modal-root"></div>
+<div id="confetti-root"></div>
+<script>
+/* ================================================================
+   CENTAURI CREDIT — data model, real profile (myFICO 3B 6/13/2026
+   + Capital One app balances 7/15/2026), storage
+   ================================================================ */
+'use strict';
+const CC = { version: 4, view: 'dashboard', simCache: null };
+
+/* ---------- real dataset ---------- */
+function defaultState(){
+  return {
+    version: 4,
+    savedAt: null,
+    profile: { name: 'Dreco', legal: 'Joseph Andre Laban Jr', goalScore: 600, stretchGoal: 650 },
+    settings: { theme: 'dark', notifications: true },
+    /* FICO 8 as of 6/13/2026 myFICO 3-bureau report. Two points = baseline (flat until you log a new score). */
+    scores: {
+      experian:   { current: 591, model: 'FICO 8', history: [591,591] },
+      equifax:    { current: 540, model: 'FICO 8', history: [540,540] },
+      transunion: { current: 593, model: 'FICO 8', history: [593,593] }
+    },
+    scoreMonths: ['Jun 26','Jul 26'],
+    scoreVersions: [
+      { model:'FICO 8 (most lenders)',      equ:540, tu:593, exp:591 },
+      { model:'Mortgage — FICO 5/4/2',      equ:511, tu:619, exp:526 },
+      { model:'FICO Auto 8',                equ:541, tu:597, exp:589 },
+      { model:'FICO Auto 9',                equ:512, tu:598, exp:589 },
+      { model:'FICO Auto 5/4/2',            equ:553, tu:640, exp:564 },
+      { model:'FICO 10',                    equ:497, tu:570, exp:575 },
+      { model:'FICO 10T',                   equ:494, tu:575, exp:581 },
+      { model:'FICO Auto 10',               equ:501, tu:579, exp:585 },
+      { model:'FICO Bankcard 10',           equ:491, tu:571, exp:577 }
+    ],
+    lastUpdated: '2026-07-15',
+    accounts: [
+      { id:'a1', emoji:'💳', logo:'🔴', name:'Capital One Quicksilver', nickname:'…5098', type:'Credit Card',
+        balance:72.21, limit:200, apr:0, payment:25, dueDay:0, status:'Open · Current', opened:'2024-01', bureaus:['EXP','EQU','TU'],
+        history:'⚠️ 4×30-day + 1×60-day (Sep 2025) · current since Feb 2026',
+        notes:'App balance 7/15 ($72.21) — June statement reported $173/87%. Keep under $20 (10%) before the statement cuts so a low balance reports. Minimum payment met.', attachments:1 },
+      { id:'a2', emoji:'💳', logo:'🔴', name:'Capital One Platinum Secured', nickname:'…1473', type:'Credit Card',
+        balance:11.92, limit:500, apr:0, payment:25, dueDay:0, status:'Open · Current', opened:'2024-07', bureaus:['EQU'],
+        history:'⚠️ 30/60/30 late Oct–Dec 2025 · current since Jan 2026',
+        notes:'⚠️ Equifax reports this card TWICE ($497 and $505, both ~100%) — a duplicate tradeline dragging EQU hard. Dispute the duplicate. App balance 7/15: $11.92.', attachments:1 },
+      { id:'a3', emoji:'💳', logo:'🟢', name:'Kikoff Credit Account', nickname:'Builder line', type:'Charge Card',
+        balance:0, limit:2500, apr:0, payment:0, dueDay:0, status:'Open · Current', opened:'2023-12', bureaus:['EXP','EQU','TU'],
+        history:'⚠️ 120-day late (Dec 2024–Jan 2025) · clean 17 months since',
+        notes:'$2,500 limit at $0 is your biggest utilization padding — keep it open and active.', attachments:0 },
+      { id:'a4', emoji:'💳', logo:'🟦', name:'Upward Financial', nickname:'Builder line', type:'Credit Card',
+        balance:0, limit:2000, apr:0, payment:0, dueDay:0, status:'Open · Current', opened:'2026-01', bureaus:['EXP','EQU'],
+        history:'✅ Perfect since opening', notes:'Newest account (Jan 2026). $2,000 limit at $0 helps utilization.', attachments:0 },
+      { id:'a5', emoji:'💳', logo:'⬜', name:'Step / Evolve B&T', nickname:'Step card', type:'Credit Card',
+        balance:0, limit:0, apr:0, payment:0, dueDay:0, status:'Open · Current', opened:'2025-02', bureaus:['EXP','EQU','TU'],
+        history:'✅ Perfect 16 months', notes:'No limit reported (high balance $3,021), so FICO may score it neutrally for utilization.', attachments:0 },
+      { id:'a6', emoji:'🎓', logo:'🟩', name:'Aidvantage Student Loan 1', nickname:'Dept of Ed …0091', type:'Student Loan',
+        balance:5689, limit:6000, apr:0, payment:81, dueDay:0, status:'Open · Current', opened:'2009-10', bureaus:['EXP','EQU','TU'],
+        history:'⚠️ 120–180d late Aug 2025 · current since Oct 2025',
+        notes:'Oldest open account (2009) — anchors your credit age. Keep the $81/mo autopaid, never late again.', attachments:0 },
+      { id:'a7', emoji:'🎓', logo:'🟩', name:'Aidvantage Student Loan 2', nickname:'Dept of Ed …1008', type:'Student Loan',
+        balance:4127, limit:3500, apr:0, payment:56, dueDay:0, status:'Open · Current', opened:'2009-10', bureaus:['EXP','EQU','TU'],
+        history:'⚠️ 120–180d late Aug 2025 · current since Oct 2025',
+        notes:'Balance above original ($3,500) from capitalized interest. $56/mo — autopay it.', attachments:0 },
+      { id:'a8', emoji:'🔧', logo:'⚫', name:'Snap-On Credit', nickname:'Tool loan …6391', type:'Personal Loan',
+        balance:4141, limit:0, apr:0, payment:0, dueDay:0, status:'Charge-Off · Unpaid', opened:'2021-08', bureaus:['EXP','EQU','TU'],
+        history:'❌ Charged off since May 2024 · re-reports CO monthly',
+        notes:'Largest actionable derog: $4,141 unpaid, reporting CO monthly on all bureaus. Goal: settlement WITH deletion in writing. (877) 777-8455 — nothing by phone, everything in writing.', attachments:0 },
+      { id:'a9', emoji:'🎓', logo:'⚫', name:'Navient Solutions', nickname:'Private student loan (joint)', type:'Student Loan',
+        balance:10871, limit:0, apr:0, payment:0, dueDay:0, status:'Charge-Off · Unpaid', opened:'2009-12', bureaus:['EXP','EQU'],
+        history:'❌ Charged off · 90d+ marks through Mar 2026',
+        notes:'$10,871 joint private loan, EQU + EXP only (not TU). Options: settlement, or dispute accuracy of re-aging. Big dollar item — tackle after the quick wins.', attachments:0 },
+      { id:'a10', emoji:'📉', logo:'⚫', name:'AT&T Mobility (collection)', nickname:'Sunrise Credit Service', type:'Collection',
+        balance:1312, limit:0, apr:0, payment:0, dueDay:0, status:'Collection · EQU unpaid / EXP paid', opened:'2025-10', bureaus:['EQU','EXP'],
+        history:'❌ Collection — bureaus DISAGREE',
+        notes:'🎯 Experian says paid/terminated; Equifax says UNPAID $1,312 (reassigned 2/27/26). That inconsistency is a strong FCRA dispute — demand Equifax verify or delete. Not on TransUnion.', attachments:0 },
+      { id:'a11', emoji:'💳', logo:'🔵', name:'Chase (JPMCB) — AU', nickname:'Authorized user, closed', type:'Authorized User',
+        balance:0, limit:6400, apr:0, payment:0, dueDay:0, status:'Closed 12/2024 · Positive', opened:'2019-10', bureaus:['EQU','TU'],
+        history:'✅ Perfect 2019–2024', notes:'Closed positive AU — still aging your file. If the cardholder re-adds you to an open, low-utilization card, you inherit its history again.', attachments:0 },
+      { id:'a12', emoji:'💳', logo:'⚫', name:'Current', nickname:'Paid charge-off', type:'Credit Card',
+        balance:0, limit:0, apr:0, payment:0, dueDay:0, status:'Closed · Paid charge-off', opened:'2023-12', bureaus:['EXP','EQU','TU'],
+        history:'❌ CO Nov 2025–Feb 2026 · paid $0 balance Mar 2026',
+        notes:'Paid, but FICO 8 still penalizes it. FICO 9/10 ignore paid collections — and a goodwill-deletion letter is worth a shot since it’s PAID.', attachments:0 },
+      { id:'a13', emoji:'💳', logo:'⚫', name:'Grow Credit', nickname:'Paid charge-off', type:'Credit Card',
+        balance:0, limit:0, apr:0, payment:0, dueDay:0, status:'Closed · Paid charge-off', opened:'2023-12', bureaus:['EXP','EQU','TU'],
+        history:'❌ CO 2024 · paid in full', notes:'Paid CO ($38 high balance!). Tiny original amount — strong goodwill-deletion candidate.', attachments:0 },
+      { id:'a14', emoji:'💳', logo:'⚫', name:'Stellar Finance', nickname:'Closed, EXP only', type:'Credit Card',
+        balance:0, limit:0, apr:0, payment:0, dueDay:0, status:'Closed · Was 180d late', opened:'2023-12', bureaus:['EXP'],
+        history:'❌ 180-day delinquency (Feb 2025) · paid/closed', notes:'Experian-only derog. Goodwill or dispute if any detail is inaccurate.', attachments:0 },
+      { id:'a15', emoji:'💸', logo:'⚫', name:'CCB / Bridge It', nickname:'Cash-advance line, closed', type:'Personal Loan',
+        balance:0, limit:0, apr:0, payment:0, dueDay:0, status:'Closed · 8×30-day lates', opened:'2023-12', bureaus:['EXP','EQU','TU'],
+        history:'⚠️ 30-day lates ×8 through Dec 2025 · $0, closed', notes:'Already disputed once (noted on file). Lates age off as they get older.', attachments:0 }
+    ],
+    tasks: [
+      { id:'t1', emoji:'📬', title:'Dispute duplicate Capital One tradeline (Equifax)', prio:'high', due:'2026-07-25', impact:'+15–30 pts EQU', done:false, note:'EQU shows the secured card twice ($497 + $505, both ~100% util). One must go.' },
+      { id:'t2', emoji:'📬', title:'Dispute AT&T collection on Equifax', prio:'high', due:'2026-07-25', impact:'+10–25 pts EQU', done:false, note:'Experian reports it PAID; Equifax says unpaid $1,312. Bureaus disagreeing = strong dispute.' },
+      { id:'t3', emoji:'💰', title:'Hold both Cap One cards under 10% through statement dates', prio:'high', due:'2026-07-31', impact:'+20–40 pts', done:false, note:'You already paid down to $84 total 🎉 — last statements reported 87–101%. Low balances must be ON the statement to count.' },
+      { id:'t4', emoji:'🔧', title:'Send settlement + deletion offer to Snap-On Credit', prio:'med', due:'2026-08-10', impact:'stops monthly CO re-reporting', done:false, note:'$4,141 unpaid. Everything in writing, deletion as a condition, never admit on the phone.' },
+      { id:'t5', emoji:'🎓', title:'Research Navient charge-off options ($10,871)', prio:'med', due:'2026-08-20', impact:'long-term', done:false, note:'Joint private loan. Settlement usually 40–60% on charged-off private loans.' },
+      { id:'t6', emoji:'💌', title:'Goodwill-deletion letters: Current + Grow Credit (both PAID COs)', prio:'med', due:'2026-08-05', impact:'+10–20 pts if deleted', done:false, note:'Paid derogs are the easiest goodwill wins — Grow was only $38.' },
+      { id:'t7', emoji:'🚫', title:'No new credit applications until 2027', prio:'low', due:'', impact:'protects score', done:false, note:'15 inquiries from Dec 2025 auto shopping still scoreable until Dec 2026.' },
+      { id:'t8', emoji:'🧊', title:'Remove initial fraud alert — Equifax', prio:'med', due:'2026-07-24', impact:'unblocks approvals', done:false, note:'Fastest: myEquifax account → manage alerts. By mail: Equifax Information Services LLC, P.O. Box 105069, Atlanta, GA 30348-5069 — written request + copy of government ID + proof of address (utility bill/bank statement). Alert otherwise runs to May 20, 2027.' },
+      { id:'t8b', emoji:'🧊', title:'Remove initial fraud alert — Experian', prio:'med', due:'2026-07-24', impact:'unblocks approvals', done:false, note:'Online: experian.com Fraud Alert Center · Phone: 1-888-397-3742 · Mail: Experian, P.O. Box 9554, Allen, TX 75013 with name, SSN, DOB, 2 yrs of addresses, government ID + utility bill/bank statement.' },
+      { id:'t8c', emoji:'🧊', title:'Remove initial fraud alert — TransUnion', prio:'med', due:'2026-07-24', impact:'unblocks approvals', done:false, note:'Online: TransUnion Service Center · Phone: 1-800-916-8800 · Mail: TransUnion Fraud Victim Assistance, P.O. Box 2000, Chester, PA 19016. Each bureau must be asked SEPARATELY — placement was shared, removal is not.' },
+      { id:'t9', emoji:'✅', title:'Bring both Aidvantage loans current', prio:'high', due:'', impact:'stopped the bleeding', done:true, note:'Current since Oct 2025 — keep autopay on ($137/mo total). 🎉' }
+    ],
+    timeline: [
+      { id:'e0', date:'2026-07-15', emoji:'🧊', text:'<b>Fraud-alert removal plan saved.</b> Equifax confirms initial alert runs until <b>May 20, 2027</b>. Removal must be requested at each bureau separately — addresses & phone numbers stored in Tasks + Contacts. Equifax mail: P.O. Box 105069, Atlanta, GA 30348-5069.', tag:'Note' },
+      { id:'e1', date:'2026-07-15', emoji:'📲', text:'<b>Capital One app synced:</b> Quicksilver $72.21 · Platinum Secured $11.92. Both under 15% — down from 87–101% reported in June.', tag:'Utilization' },
+      { id:'e2', date:'2026-06-13', emoji:'📄', text:'<b>myFICO 3-bureau report imported.</b> FICO 8: EQU 540 · TU 593 · EXP 591. 15 tradelines + 1 collection mapped into Centauri Credit.', tag:'Score change' },
+      { id:'e3', date:'2026-05-20', emoji:'🧊', text:'<b>Fraud alert placed</b> on all three bureaus (1 year, through May 2027).', tag:'Note' },
+      { id:'e4', date:'2026-02-27', emoji:'📬', text:'<b>AT&T collection reassigned</b> on Equifax (still shows unpaid $1,312 there — Experian shows it paid).', tag:'Dispute' },
+      { id:'e5', date:'2026-02-01', emoji:'💳', text:'<b>Capital One cards back to current</b> after the late streak — clean since.', tag:'Payment' },
+      { id:'e6', date:'2026-01-23', emoji:'💳', text:'<b>Upward Financial opened</b> — $2,000 builder line, reporting EQU + EXP.', tag:'New tradeline' },
+      { id:'e7', date:'2025-12-15', emoji:'🔍', text:'<b>Auto-loan rate shopping</b> — ~13 inquiries (Westlake, Ally, Exeter, Gary Yeomans Honda…). FICO counts a shopping window as one, but the file shows them all.', tag:'Inquiry' },
+      { id:'e8', date:'2025-10-26', emoji:'📉', text:'<b>AT&T Mobility sent to collections</b> ($1,312, Sunrise Credit Service).', tag:'Dispute' },
+      { id:'e9', date:'2025-10-01', emoji:'✅', text:'<b>Aidvantage loans brought current</b> after the Aug 2025 120–180 day marks.', tag:'Payment' },
+      { id:'e10', date:'2025-09-01', emoji:'⚠️', text:'<b>Capital One Quicksilver hit 60 days late</b> (Jun–Oct 2025 rough patch).', tag:'Payment' },
+      { id:'e11', date:'2024-05-01', emoji:'❌', text:'<b>Snap-On Credit charged off</b> — $4,141, still re-reporting monthly.', tag:'Note' }
+    ],
+    contacts: [
+      { id:'c1', emoji:'🔵', name:'Equifax', kind:'Credit Bureau', phone:'1-866-349-5191', email:'', web:'equifax.com', rep:'—', hours:'Mon–Fri 9a–9p ET', last:'', next:'2026-07-24',
+        notes:'Your weakest bureau (540). Carries the duplicate Cap One tradeline AND the unpaid-version AT&T collection — two disputes due Jul 25. Fraud alert active until May 20, 2027.',
+        links:[ {label:'Dispute portal', url:'https://www.equifax.com/personal/disputes'}, {label:'myEquifax — manage fraud alert', url:'https://my.equifax.com'} ],
+        addresses:[ {label:'Disputes & fraud-alert removal (mail)', text:'Equifax Information Services LLC, P.O. Box 105069, Atlanta, GA 30348-5069'} ],
+        attachments:[ {name:'Equifax_mailing_address.png', kind:'Screenshot', date:'2026-07-15', note:'Mailing address (your screenshot)', dataUrl:null},
+                      {name:'Equifax_fraud_alert_notice.png', kind:'Screenshot', date:'2026-07-15', note:'Initial fraud alert until May 20, 2027', dataUrl:null} ] },
+      { id:'c2', emoji:'🟢', name:'Experian', kind:'Credit Bureau', phone:'1-888-397-3742', email:'', web:'experian.com', rep:'—', hours:'Mon–Fri 9a–5p', last:'', next:'2026-07-24',
+        notes:'591 FICO 8. Shows AT&T as PAID — request that record to use against Equifax.',
+        links:[ {label:'Dispute center', url:'https://www.experian.com/disputes'}, {label:'Fraud Alert Center (removal)', url:'https://www.experian.com/help/fraud-alert/'} ],
+        addresses:[ {label:'Fraud-alert removal (mail — include ID + utility bill)', text:'Experian, P.O. Box 9554, Allen, TX 75013'} ], attachments:[] },
+      { id:'c3', emoji:'🟣', name:'TransUnion', kind:'Credit Bureau', phone:'1-800-916-8800', email:'', web:'transunion.com', rep:'—', hours:'Mon–Fri 8a–11p ET', last:'', next:'2026-07-24',
+        notes:'Cleanest file (593) — no AT&T, no Navient. Protect it.',
+        links:[ {label:'Dispute page', url:'https://www.transunion.com/creditDisputes.page'}, {label:'Service Center (fraud alert)', url:'https://service.transunion.com'} ],
+        addresses:[ {label:'Fraud Victim Assistance (mail)', text:'TransUnion Fraud Victim Assistance, P.O. Box 2000, Chester, PA 19016'} ], attachments:[] },
+      { id:'c4', emoji:'🔴', name:'Capital One', kind:'Bank', phone:'1-800-955-7070', email:'', web:'capitalone.com', rep:'—', hours:'24/7', last:'2026-07-15', next:'2026-08-15',
+        notes:'Both cards current since Feb. August: ask Platinum Secured graduation + Quicksilver CLI (soft pulls).',
+        links:[], addresses:[ {label:'Card services (from credit report)', text:'Capital One, P.O. Box 31293, Salt Lake City, UT'} ], attachments:[
+          {name:'CapitalOne_app_balances_7-15-2026.png', kind:'Screenshot', date:'2026-07-15', note:'…1473 $11.92 · …5098 $72.21', dataUrl:null} ] },
+      { id:'c5', emoji:'🔧', name:'Snap-On Credit', kind:'Collector', phone:'1-877-777-8455', email:'', web:'', rep:'—', hours:'Mon–Fri business hrs', last:'', next:'2026-08-10',
+        notes:'$4,141 charge-off. NEVER admit the debt by phone. Written settlement with deletion as a written condition.',
+        links:[], addresses:[ {label:'From credit report', text:'Snap-On Credit LLC, 950 Technology Way, Libertyville, IL'} ], attachments:[] },
+      { id:'c6', emoji:'🎓', name:'Aidvantage (Dept of Ed)', kind:'Lender', phone:'1-800-722-1300', email:'', web:'aidvantage.com', rep:'—', hours:'Mon–Fri 8a–9p ET', last:'2025-10-01', next:'',
+        notes:'Both loans current, $137/mo total. Autopay = non-negotiable. Ask about income-driven repayment if payments strain.',
+        links:[ {label:'Account login', url:'https://aidvantage.studentaid.gov'} ],
+        addresses:[ {label:'Payments/correspondence (from credit report)', text:'Dept of Ed / Aidvantage, P.O. Box 300001, Greenville, TX'} ], attachments:[] },
+      { id:'c7', emoji:'📉', name:'Sunrise Credit Service (AT&T)', kind:'Collector', phone:'—', email:'', web:'', rep:'—', hours:'—', last:'', next:'',
+        notes:'$1,312 AT&T collection (EQU shows unpaid; EXP shows paid). If the EQU dispute fails: written pay-for-delete, open ~40% (~$525). Address per collection letter — add it here when it arrives.',
+        links:[], addresses:[], attachments:[] },
+      { id:'c8', emoji:'🎓', name:'Navient', kind:'Lender', phone:'—', email:'', web:'navient.com', rep:'—', hours:'—', last:'', next:'2026-08-20',
+        notes:'$10,871 joint private-loan charge-off (EQU + EXP). Everything in writing; settlements often land 40–60%.',
+        links:[], addresses:[], attachments:[] }
+    ],
+    goals: [
+      { id:'g1', emoji:'🎯', title:'600 on all three bureaus', target:600, note:'Equifax (540) is the outlier — fix EQU, hit the goal', eta:'Fall 2026', actions:'Win the 2 Equifax disputes · let sub-10% statements report on both Cap One cards' },
+      { id:'g2', emoji:'🚀', title:'650 average FICO 8', target:650, note:'Opens mainstream cards & better APRs', eta:'Mid 2027', actions:'Resolve Snap-On CO · 12 clean months · inquiries age off Dec 2026' },
+      { id:'g3', emoji:'🚗', title:'Auto loan at a fair rate', target:640, note:'Your TU FICO Auto 5/4/2 is ALREADY 640 — many auto lenders pull exactly that', eta:'Late 2026', actions:'Keep util <10% · zero new lates · re-shop in a single 14-day window' },
+      { id:'g4', emoji:'🏠', title:'Mortgage-ready (620+ mid-score)', target:620, note:'FHA floor. Current mortgage mid-score: 526 (FICO 5/4/2)', eta:'2028', actions:'Collections resolved · 24 clean months · util <10% · stable income docs' }
+    ],
+    files: [
+      { id:'f1', emoji:'📄', name:'myFICO_3Bureau_Report_6-13-2026.pdf', kind:'Credit Report', date:'2026-06-13', size:'1.1 MB', extract:'FICO 8: 540/593/591 · 9 score versions · 15 tradelines · 1 collection · 15 inquiries · fraud alerts active — fully imported' },
+      { id:'f2', emoji:'🖼️', name:'CapitalOne_app_balances_7-15-2026.png', kind:'Screenshot', date:'2026-07-15', size:'—', extract:'Platinum Secured …1473: $11.92 · Quicksilver …5098: $72.21 (min payment met) — balances synced' },
+      { id:'f3', emoji:'🖼️', name:'Equifax_fraud_alert_notice.png', kind:'Screenshot', date:'2026-07-15', size:'—', extract:'Initial fraud alert in place until May 20, 2027 — removal steps saved to Tasks & Contacts' },
+      { id:'f4', emoji:'🖼️', name:'Equifax_mailing_address.png', kind:'Screenshot', date:'2026-07-15', size:'—', extract:'Equifax Information Services LLC, P.O. Box 105069, Atlanta, GA 30348-5069 — saved to Equifax contact card' }
+    ],
+    chat: [
+      { who:'ai', text:'👋 Welcome to your real command center, Dreco. I read your full myFICO report (6/13) and your Capital One screenshot (today). The honest picture:\n\n📊 FICO 8: Equifax 540 · TransUnion 593 · Experian 591\n\n🔴 Equifax is 50+ points behind — and I found out why: it reports your secured card TWICE (both ~100% util) and shows the AT&T collection as UNPAID while Experian shows it PAID. Both are disputable errors.\n\n🟢 The great news: your cards are already paid to $84 total. When the July statements report, the 87–101% utilization that crushed you turns into ~2% — that alone is worth an estimated +20–40 points.\n\nYour move this week: send the two Equifax disputes (Task Center, due Jul 25). Ask me anything — “explain the duplicate”, “what should I do next?”, “what if the collection gets deleted?”' }
+    ],
+    inquiries: [
+      { bureau:'EXP', date:'2026-01-20', by:'Nowcom/DI3 Group' },
+      { bureau:'EQU/EXP', date:'2025-12-23', by:'Western Funding · Westlake · Consumer Portfolio · United Auto · Lobel · Global Lending' },
+      { bureau:'EQU/EXP', date:'2025-12-16', by:'Westlake · Global Lending · Ally ×2 · Exeter' },
+      { bureau:'EQU/EXP', date:'2025-12-15', by:'Gary Yeomans Honda · 700Cr/Yeomans' },
+      { bureau:'TU', date:'2025-12-04', by:'Alliant Credit Union' }
+    ],
+    history: []
+  };
+}
+
+/* ---------- storage (guarded — in-memory first, browser storage when available) ---------- */
+const Store = {
+  ok:false,
+  init(){ try{ const t='__cc__'; window.localStorage.setItem(t,'1'); window.localStorage.removeItem(t); this.ok=true; }catch(e){ this.ok=false; } },
+  load(){ if(!this.ok) return null; try{ const raw = window.localStorage.getItem('centauri-credit'); return raw? JSON.parse(raw): null; }catch(e){ return null; } },
+  save(s){ if(!this.ok) return; try{ window.localStorage.setItem('centauri-credit', JSON.stringify(s)); }catch(e){} }
+};
+Store.init();
+let S = (function(){
+  let saved = Store.load();
+  if(saved && saved.version === 3){
+    /* migrate v3 -> v4: add links / addresses / attachments to contacts, keep user edits */
+    const fresh = defaultState();
+    (saved.contacts||[]).forEach(c=>{
+      c.links = c.links||[]; c.addresses = c.addresses||[]; c.attachments = c.attachments||[]; c.email = c.email||'';
+      const seed = fresh.contacts.find(f=>f.name===c.name);
+      if(seed){
+        if(!c.links.length) c.links = seed.links;
+        if(!c.addresses.length) c.addresses = seed.addresses;
+        if(!c.attachments.length) c.attachments = seed.attachments;
+      }
+    });
+    saved.version = 4;
+  }
+  return (saved && saved.version === 4) ? saved : defaultState();
+})();
+
+function persist(snapshotLabel){
+  S.savedAt = new Date().toISOString();
+  if(snapshotLabel){
+    S.history.unshift({ at:S.savedAt, label:snapshotLabel });
+    S.history = S.history.slice(0,25);
+  }
+  Store.save(S);
+  if(window.CloudPush) window.CloudPush();
+  const el = document.getElementById('savestamp');
+  if(el) el.textContent = '☁️ Saved ' + fmtTime(new Date());
+}
+
+/* attachment source resolver — inline dataUrl or cloud blob */
+function attSrc(a){ return (a && (a.dataUrl || (a.blobId && window.BLOBS && window.BLOBS[a.blobId]))) || null; }
+
+/* ---------- helpers ---------- */
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt$ = n => '$' + Number(n||0).toLocaleString('en-US',{maximumFractionDigits: (n%1===0?0:2)});
+const fmtPct = n => (Math.round(n*10)/10) + '%';
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d + (d.length===10?'T12:00:00':'')); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year: dt.getFullYear()===2026?undefined:'numeric'}); }
+function fmtTime(d){ return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function uid(p){ return p + Math.random().toString(36).slice(2,8); }
+function clamp(n,a,b){ return Math.max(a,Math.min(b,n)); }
+
+const BUREAUS = [
+  { key:'equifax',    label:'Equifax',    dot:'🔵', var:'--equ' },
+  { key:'experian',   label:'Experian',   dot:'🟢', var:'--exp' },
+  { key:'transunion', label:'TransUnion', dot:'🟣', var:'--tu'  }
+];
+/* display order on cards: Experian, Equifax, TransUnion */
+const BUREAU_CARDS = ['experian','equifax','transunion'];
+const BMETA = {
+  experian:{ label:'Experian', dot:'🟢', color:()=>cssVar('--exp') },
+  equifax:{ label:'Equifax', dot:'🔵', color:()=>cssVar('--equ') },
+  transunion:{ label:'TransUnion', dot:'🟣', color:()=>cssVar('--tu') }
+};
+function cssVar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+/* ---------- derived credit math ---------- */
+function isRevolving(a){ return ['Credit Card','Authorized User','Charge Card'].includes(a.type); }
+function isOpenAcct(a){ return !/closed|charge-off/i.test(a.status); }
+function revolvers(){ return S.accounts.filter(a=>isRevolving(a) && a.limit>0 && isOpenAcct(a)); }
+function derogs(){ return S.accounts.filter(a=>/charge-off|collection/i.test(a.status)); }
+function unpaidDerogs(){ return derogs().filter(a=>a.balance>0); }
+function totalUtil(){
+  const r = revolvers();
+  const bal = r.reduce((s,a)=>s+a.balance,0), lim = r.reduce((s,a)=>s+a.limit,0);
+  return lim? (bal/lim*100) : 0;
+}
+function acctUtil(a){ return a.limit? (a.balance/a.limit*100) : 0; }
+function avgScore(){ return Math.round((S.scores.experian.current + S.scores.equifax.current + S.scores.transunion.current)/3); }
+function hasCollections(){ return unpaidDerogs().length>0; }
+function utilBadge(u){ return u<10?['Excellent','good'] : u<30?['Good','info'] : u<50?['Fair','warn'] : u<75?['High','serious'] : ['Critical','crit']; }
+function scoreBand(s){ return s>=800?['Exceptional','good'] : s>=740?['Very Good','good'] : s>=670?['Good','info'] : s>=580?['Fair','warn'] : ['Poor','crit']; }
+function healthPct(){
+  let pct = (avgScore()-300)/(850-300)*100;
+  const u = totalUtil();
+  pct += u<10?8 : u<30?4 : u<50?-4 : -10;
+  pct -= Math.min(12, unpaidDerogs().length * 4);
+  return clamp(Math.round(pct),0,100);
+}
+function healthLabel(p){ return p>=75?['💚 Excellent','var(--good-text)'] : p>=58?['💛 Good','var(--warn)'] : p>=42?['🧡 Fair','var(--serious)'] : ['❤️ Needs Attention','var(--crit-text)']; }
+
+/* FICO factor assessment (rule-based, driven by the real file) */
+function factors(){
+  const u = totalUtil();
+  const nDerog = derogs().length, nUnpaid = unpaidDerogs().length;
+  const ages = S.accounts.filter(a=>a.opened).map(a=>{
+    const [y,m]=a.opened.split('-').map(Number); return (2026-y)*12 + (7-(m||1));
+  });
+  const avgAge = ages.length? ages.reduce((a,b)=>a+b,0)/ages.length/12 : 0;
+  const types = new Set(S.accounts.filter(a=>a.type!=='Collection').map(a=>isRevolving(a)?'rev':'inst'));
+  const inqNote = 'Dec 2025 auto-shopping cluster stops being scored Dec 2026.';
+  return [
+    { key:'history', emoji:'🟢', name:'Payment History', weight:'35%',
+      rating: nUnpaid?'Poor':'Rebuilding', tone: nUnpaid?'crit':'warn',
+      sub: nUnpaid? `${nUnpaid} unpaid derogatorie${nUnpaid===1?'y':'s'} (AT&T · Snap-On · Navient) + 2025 late marks. Every clean month now outweighs the past a little more.` : 'Derogatories resolved — clean months are compounding now.',
+      plan:'Disputes 30 days · settlements 60–90', gain: nUnpaid?'+40–80 pts over 6–12 mo':'+10–20 pts' },
+    { key:'util', emoji:'🟡', name:'Utilization', weight:'30%',
+      rating: u<10?'Excellent (pending)':u<30?'Good':u<50?'Fair':'Poor', tone: u<10?'good':u<30?'info':u<50?'warn':'crit',
+      sub:`Live balances: ${fmtPct(u)} 🎉 — but bureaus still show June statements at 87–101% on the Cap One cards. The fix already happened; it reports with the next statements.`,
+      plan:'Next statement cycle → ~30 days', gain:'+20–40 pts' },
+    { key:'age', emoji:'🔵', name:'Length of Credit', weight:'15%',
+      rating: avgAge>=8?'Very Good':avgAge>=5?'Good':avgAge>=3?'Fair':'Short', tone: avgAge>=5?'good':avgAge>=3?'info':'warn',
+      sub:`Average age ≈ ${avgAge.toFixed(1)} yrs (2009 student loans + 2019 AU anchor a young revolving file). Don’t close old accounts.`,
+      plan:'Passive — grows monthly', gain:'+1–2 pts / 6 mo' },
+    { key:'mix', emoji:'🟣', name:'Credit Mix', weight:'10%',
+      rating: types.size>=2?'Very Good':'Thin', tone: types.size>=2?'good':'warn',
+      sub: 'Cards + installment loans ✔. Mix is a strength on all three bureaus (report confirmed “Very Good”).',
+      plan:'No action', gain:'maintained' },
+    { key:'new', emoji:'🟠', name:'New Credit', weight:'10%',
+      rating:'Recovering', tone:'warn',
+      sub:`15 inquiries in 12 mo (Dec 2025 auto shopping — FICO scores a shopping window as one, but it’s still a young-file drag). ${inqNote}`,
+      plan:'Zero applications until 2027', gain:'+5–15 pts by Jan 2027' }
+  ];
+}
+
+/* suggestion engine — profile-aware */
+function suggestions(){
+  const out = [];
+  const u = totalUtil();
+  out.push({ rank:'🔥', level:'High Impact', title:'Win the two Equifax disputes (duplicate Cap One + AT&T)',
+    body:'Equifax (540) is 50+ points behind your other bureaus for fixable reasons: your secured card reports twice at ~100% utilization, and AT&T shows unpaid there while Experian shows it PAID. Dispute both online at equifax.com/personal/disputes — bureaus have 30 days to verify or delete.',
+    impact:'+25–55 pts EQU', diff:'Medium', time:'45 min to file', cost:'$0', act:null });
+  out.push({ rank:'🔥', level:'High Impact', title:'Let your sub-10% balances actually report',
+    body:`You already did the hard part — cards are at ${fmt$(revolvers().reduce((s,a)=>s+a.balance,0))} total. June statements reported 87–101%. Don’t add spending before the July statements cut: the reported number is the scored number.`,
+    impact:'+20–40 pts', diff:'Easy', time:'Wait ~2–4 weeks', cost:'$0', act:{type:'task', title:'Verify July statement balances reported low', emoji:'📊', prio:'med', impact:'+20–40 pts'} });
+  revolvers().filter(a=>acctUtil(a)>=40).forEach(a=>{
+    out.push({ rank:'🔥', level:'High Impact', title:`Pay ${a.name} below 10%`,
+      body:`Currently ${fmtPct(acctUtil(a))} utilized — single maxed cards drag every FICO model.`,
+      impact:'+10–20 pts', diff:'Medium', time:'Before statement', cost:fmt$(Math.max(0,a.balance-a.limit*0.09)), act:null });
+  });
+  out.push({ rank:'⚡', level:'Medium Impact', title:'Snap-On Credit: written settlement with deletion',
+    body:'$4,141 unpaid charge-off re-reporting monthly on all three bureaus — every month it re-reports, it stays "recent". A written settlement (start ~40%) with deletion as an explicit condition stops the bleeding. Nothing by phone.',
+    impact:'+15–30 pts over time', diff:'Hard', time:'30–90 days', cost:'~$1,650–2,500', act:{type:'task', title:'Draft Snap-On settlement letter', emoji:'📬', prio:'med', impact:'+15–30 pts'} });
+  out.push({ rank:'⚡', level:'Medium Impact', title:'Goodwill-deletion letters for the PAID charge-offs',
+    body:'Current and Grow Credit are both paid ($0). Paid derogs are the easiest goodwill wins — Grow’s whole history was $38. Short letter, take responsibility, cite the paid status, ask for a one-time courtesy deletion.',
+    impact:'+10–20 pts if deleted', diff:'Easy', time:'1 hour', cost:'$0', act:{type:'task', title:'Mail goodwill letters (Current, Grow)', emoji:'💌', prio:'med', impact:'+10–20 pts'} });
+  out.push({ rank:'💡', level:'Small Improvement', title:'Autopay minimums on everything that bills',
+    body:'The Aug 2025 Aidvantage 180-day marks and the fall 2025 Cap One streak did most of today’s damage. Autopay-minimum makes a repeat impossible. One new 30-day late would cost 40–80 points at this stage.',
+    impact:'protects everything', diff:'Easy', time:'20 minutes', cost:'$0', act:null });
+  out.push({ rank:'💡', level:'Small Improvement', title:'Capital One graduation + CLI ask in August',
+    body:'Both cards clean since Feb 2026 = 6 months in August. Ask about Platinum Secured graduation (deposit back, unsecured) and a Quicksilver CLI — soft pull, and a higher limit lowers utilization for free.',
+    impact:'+5–15 pts', diff:'Easy', time:'10 minutes', cost:'$0', act:{type:'task', title:'Call Capital One re: graduation + CLI', emoji:'📞', prio:'low', impact:'+5–15 pts'} });
+  return out;
+}
+</script>
+<script>
+/* ================================================================
+   CHARTS — inline SVG per dataviz specs (2px lines, ≥8px markers,
+   surface rings, hairline grid, tooltip layer, no dual axes)
+   ================================================================ */
+function sparkline(data, color, w=150, h=42, surface){
+  surface = surface || 'var(--surface-1)';
+  const min = Math.min(...data), max = Math.max(...data), pad = 4;
+  const range = (max-min)||1;
+  const pts = data.map((v,i)=>[ pad + i*(w-2*pad)/(data.length-1), h-pad - (v-min)/range*(h-2*pad) ]);
+  const path = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area = path + ` L${pts[pts.length-1][0].toFixed(1)} ${h} L${pts[0][0].toFixed(1)} ${h} Z`;
+  const [ex,ey] = pts[pts.length-1];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true" style="display:block;overflow:visible">
+    <path d="${area}" fill="${color}" opacity="0.10"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${ex}" cy="${ey}" r="5.5" fill="${surface}"/>
+    <circle cx="${ex}" cy="${ey}" r="4" fill="${color}"/>
+  </svg>`;
+}
+
+/* Big 3-series trend chart with crosshair + tooltip */
+function trendChart(){
+  const w=760, h=250, padL=42, padR=96, padT=14, padB=26;
+  const months = S.scoreMonths;
+  const series = BUREAU_CARDS.map(k=>({ key:k, label:BMETA[k].label, color:`var(${k==='experian'?'--exp':k==='equifax'?'--equ':'--tu'})`, data:S.scores[k].history }));
+  const all = series.flatMap(s=>s.data);
+  let min = Math.floor(Math.min(...all)/20)*20, max = Math.ceil(Math.max(...all)/20)*20;
+  if(max-min<40){max=min+40;}
+  const X = i => padL + i*(w-padL-padR)/(months.length-1);
+  const Y = v => padT + (max-v)/(max-min)*(h-padT-padB);
+  let grid='', yl='';
+  for(let v=min; v<=max; v+=20){
+    grid += `<line x1="${padL}" x2="${w-padR}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+    yl += `<text x="${padL-8}" y="${Y(v)+3.5}" text-anchor="end" font-size="10" fill="var(--ink-3)" style="font-variant-numeric:tabular-nums">${v}</text>`;
+  }
+  let xl='';
+  months.forEach((m,i)=>{ if(i%2===0||i===months.length-1) xl += `<text x="${X(i)}" y="${h-6}" text-anchor="middle" font-size="10" fill="var(--ink-3)">${m}</text>`; });
+  let paths='', ends='', labels='';
+  // sort end labels by final value to prevent collisions
+  const endSorted = [...series].sort((a,b)=> b.data[b.data.length-1]-a.data[a.data.length-1]);
+  const lYs=[]; endSorted.forEach(s=>{
+    let y = Y(s.data[s.data.length-1]);
+    while(lYs.some(v=>Math.abs(v-y)<15)) y+=15;
+    lYs.push(y); s._ly = y;
+  });
+  series.forEach(s=>{
+    const d = s.data.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    paths += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const ex=X(s.data.length-1), ey=Y(s.data[s.data.length-1]);
+    ends += `<circle cx="${ex}" cy="${ey}" r="6" fill="var(--surface-1)"/><circle cx="${ex}" cy="${ey}" r="4.5" fill="${s.color}"/>`;
+    if(Math.abs(s._ly-ey)>7) labels += `<line x1="${ex+7}" y1="${ey}" x2="${w-padR+16}" y2="${s._ly}" stroke="var(--baseline)" stroke-width="1"/>`;
+    labels += `<circle cx="${w-padR+22}" cy="${s._ly}" r="3.5" fill="${s.color}"/>
+      <text x="${w-padR+30}" y="${s._ly+3.5}" font-size="11" font-weight="600" fill="var(--ink-1)" style="font-variant-numeric:tabular-nums">${s.data[s.data.length-1]}</text>
+      <text x="${w-padR+30}" y="${s._ly+15}" font-size="9" fill="var(--ink-3)">${s.label}</text>`;
+  });
+  return `<div style="overflow-x:auto">
+    <svg id="trendsvg" width="100%" viewBox="0 0 ${w} ${h}" style="min-width:560px;display:block" role="img" aria-label="12-month FICO score trend for Experian, Equifax and TransUnion"
+      data-months='${JSON.stringify(months)}' data-min="${min}" data-max="${max}" data-padl="${padL}" data-padr="${padR}" data-padt="${padT}" data-padb="${padB}" data-w="${w}" data-h="${h}">
+      ${grid}
+      <line x1="${padL}" x2="${w-padR}" y1="${Y(min)}" y2="${Y(min)}" stroke="var(--baseline)" stroke-width="1"/>
+      ${yl}${xl}
+      <line id="crosshair" y1="${padT}" y2="${h-padB}" stroke="var(--baseline)" stroke-width="1" opacity="0"/>
+      ${paths}${ends}${labels}
+      <g id="hoverdots"></g>
+      <rect x="${padL}" y="${padT}" width="${w-padL-padR}" height="${h-padT-padB}" fill="transparent" id="trendhit"/>
+    </svg></div>
+    <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap" aria-hidden="false">
+      ${series.map(s=>`<span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2)"><i style="width:9px;height:9px;border-radius:50%;background:${s.color};display:inline-block"></i>${s.label}</span>`).join('')}
+    </div>`;
+}
+function bindTrendHover(){
+  const svg = $('#trendsvg'); if(!svg) return;
+  const tip = $('#viztip');
+  const months = JSON.parse(svg.dataset.months);
+  const {min,max,padl,padr,padt,padb,w,h} = Object.fromEntries(Object.entries(svg.dataset).map(([k,v])=>[k,isNaN(+v)?v:+v]));
+  const X = i => padl + i*(w-padl-padr)/(months.length-1);
+  const Y = v => padt + (max-v)/(max-min)*(h-padt-padb);
+  const hit = svg.querySelector('#trendhit'), cross = svg.querySelector('#crosshair'), dots = svg.querySelector('#hoverdots');
+  function show(e){
+    const r = svg.getBoundingClientRect();
+    const sx = (e.clientX-r.left)/r.width*w;
+    const i = clamp(Math.round((sx-padl)/((w-padl-padr)/(months.length-1))),0,months.length-1);
+    cross.setAttribute('x1',X(i)); cross.setAttribute('x2',X(i)); cross.setAttribute('opacity','1');
+    dots.innerHTML = BUREAU_CARDS.map(k=>{
+      const v=S.scores[k].history[i], c = k==='experian'?'var(--exp)':k==='equifax'?'var(--equ)':'var(--tu)';
+      return `<circle cx="${X(i)}" cy="${Y(v)}" r="6.5" fill="var(--surface-1)"/><circle cx="${X(i)}" cy="${Y(v)}" r="4.5" fill="${c}"/>`;
+    }).join('');
+    tip.style.display='block';
+    tip.innerHTML = `<div class="vt-d">${months[i]}</div>` + BUREAU_CARDS.map(k=>{
+      const c = k==='experian'?'var(--exp)':k==='equifax'?'var(--equ)':'var(--tu)';
+      return `<div class="vt-row"><span class="sw" style="background:${c}"></span>${BMETA[k].label}<span class="vv">${S.scores[k].history[i]}</span></div>`;
+    }).join('');
+    const tw = tip.offsetWidth;
+    let left = e.clientX+14; if(left+tw > window.innerWidth-10) left = e.clientX-tw-14;
+    tip.style.left = left+'px'; tip.style.top = Math.max(10,e.clientY-30)+'px';
+  }
+  function hide(){ tip.style.display='none'; cross.setAttribute('opacity','0'); dots.innerHTML=''; }
+  hit.addEventListener('mousemove',show);
+  hit.addEventListener('mouseleave',hide);
+  hit.addEventListener('touchstart',e=>{ if(e.touches[0]) show(e.touches[0]); },{passive:true});
+  hit.addEventListener('touchmove',e=>{ if(e.touches[0]) show(e.touches[0]); },{passive:true});
+  hit.addEventListener('touchend',hide);
+}
+
+/* health ring gauge */
+function healthRing(){
+  const pct = healthPct();
+  const [lbl,color] = healthLabel(pct);
+  const R=78, C=2*Math.PI*R, off = C*(1-pct/100);
+  return `
+  <div class="ring-center">
+    <svg width="190" height="190" viewBox="0 0 190 190">
+      <circle cx="95" cy="95" r="${R}" fill="none" stroke="var(--glass-raise)" stroke-width="13"/>
+      <circle cx="95" cy="95" r="${R}" fill="none" stroke="${color.startsWith('var')?color:'var(--accent)'}" stroke-width="13"
+        stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"
+        transform="rotate(-90 95 95)" style="transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)" id="ringarc"/>
+    </svg>
+    <div class="ring-label">
+      <div class="pct">${pct}<span style="font-size:19px;color:var(--ink-3)">%</span></div>
+      <div class="st" style="color:${color}">${lbl}</div>
+      <div class="cap">Overall credit health</div>
+    </div>
+  </div>`;
+}
+function animateRing(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const a = document.getElementById('ringarc'); if(!a) return;
+    const pct = healthPct(), R=78, C=2*Math.PI*R;
+    a.style.strokeDashoffset = (C*(1-pct/100)).toFixed(1);
+  }));
+}
+function utilBar(u, small){
+  const [,tone] = utilBadge(u);
+  const fill = tone==='good'?'var(--good)':tone==='info'?'var(--info)':tone==='warn'?'var(--warn)':tone==='serious'?'var(--serious)':'var(--crit)';
+  const track = tone==='good'?'rgba(12,163,12,.15)':tone==='info'?'rgba(57,135,229,.15)':tone==='warn'?'rgba(250,178,25,.14)':tone==='serious'?'rgba(236,131,90,.15)':'rgba(208,59,59,.16)';
+  return `<div class="meter" style="--track:${track};${small?'height:5px':''}"><i style="width:${clamp(u,0,100)}%;--fill:${fill};background:${fill}"></i></div>`;
+}
+</script>
+<script>
+/* ================================================================
+   APP SHELL — nav, topbar, router, toasts, confetti, modal, search
+   ================================================================ */
+const NAV = [
+  { id:'dashboard', ico:'🪐', label:'Dashboard' },
+  { id:'accounts',  ico:'💳', label:'Accounts' },
+  { id:'tasks',     ico:'✅', label:'Tasks' },
+  { id:'timeline',  ico:'📜', label:'Timeline' },
+  { id:'goals',     ico:'🎯', label:'Goals' },
+  { id:'simulator', ico:'🧮', label:'Simulator' },
+  { id:'ai',        ico:'⭐', label:'Centauri AI' },
+  { id:'contacts',  ico:'📞', label:'Contacts' },
+  { id:'files',     ico:'📁', label:'File Center' }
+];
+
+function renderNav(){
+  $('#sidebar').innerHTML = `
+    <div class="brand"><div class="brand-logo">🪐</div>
+      <div><div class="brand-name">Centauri Credit</div><div class="brand-sub">FICO Command Center</div></div></div>
+    ${NAV.map(n=>`<button class="nav-btn ${CC.view===n.id?'active':''}" onclick="go('${n.id}')"><span class="ico">${n.ico}</span>${n.label}</button>`).join('')}
+    <div class="nav-spacer"></div>
+    <div class="sidebar-foot" id="savestamp-wrap">
+      <div id="syncstatus"></div>
+      <div id="savestamp" style="margin-top:4px">Auto-save on</div>
+    </div>`;
+  if(window.setSyncState) setSyncState(window.SYNC_STATE||'connecting');
+  $('#bottomnav').innerHTML = NAV.map(n=>
+    `<button class="bn-btn ${CC.view===n.id?'active':''}" onclick="go('${n.id}')"><span class="ico">${n.ico}</span>${n.label.split(' ')[0]}</button>`
+  ).join('');
+  const act = $('#bottomnav .bn-btn.active');
+  if(act && act.scrollIntoView) act.scrollIntoView({inline:'center', block:'nearest'});
+}
+function topbarHTML(title, sub, extra){
+  return `<div><h1>${title}</h1><div class="sub">${sub||''}</div></div>
+  <div class="top-actions">
+    <div class="searchbox"><span class="mag">🔍</span><input id="globalsearch" placeholder="Search everything…  ( / )" autocomplete="off"></div>
+    ${extra||''}
+    <button class="icon-btn" title="Toggle light / dark" onclick="toggleTheme()">${document.documentElement.dataset.theme==='dark'?'☀️':'🌙'}</button>
+    <button class="icon-btn" title="Export / import data" onclick="openDataModal()">☁️</button>
+  </div>`;
+}
+function go(view){
+  CC.view = view;
+  render();
+  window.scrollTo({top:0});
+}
+function toggleTheme(){
+  const t = document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme = t;
+  S.settings.theme = t; persist();
+  render();
+}
+function toast(title, body, tone){
+  const t = document.createElement('div');
+  t.className = 'toast ' + (tone||'');
+  t.innerHTML = `<b>${title}</b><span>${body||''}</span>`;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, 4200);
+}
+function celebrate(){
+  const root = $('#confetti-root');
+  const colors = ['#3987e5','#a855f7','#199e70','#fab219','#ec835a','#f2f4fa'];
+  const wrap = document.createElement('div'); wrap.className='confetti';
+  for(let i=0;i<70;i++){
+    const c = document.createElement('i');
+    c.style.left = Math.random()*100+'vw';
+    c.style.background = colors[i%colors.length];
+    c.style.animationDelay = (Math.random()*0.9)+'s';
+    c.style.animationDuration = (2+Math.random()*1.4)+'s';
+    wrap.appendChild(c);
+  }
+  root.appendChild(wrap);
+  setTimeout(()=>wrap.remove(), 4200);
+}
+/* modal */
+function openModal(html){
+  $('#modal-root').innerHTML = `<div class="modal-veil" onclick="if(event.target===this)closeModal()"><div class="modal pop">${html}</div></div>`;
+}
+function closeModal(){
+  $('#modal-root').innerHTML='';
+  if(window._pendingRender){ window._pendingRender = false; render(); }
+}
+
+/* data export / import / reset / cloud sync */
+const LIVE_URL = 'https://planetxentauri.github.io/centauri-credit/';
+function syncLink(){ return window.CC_SYNC_CODE ? LIVE_URL + '?sync=' + window.CC_SYNC_CODE : LIVE_URL; }
+function copySyncLink(){
+  const link = syncLink();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>toast('🔗 Sync link copied','Open it on any device to connect it to this data','good'))
+      .catch(()=>prompt('Copy your sync link:', link));
+  } else prompt('Copy your sync link:', link);
+}
+function joinSync(){
+  const v = ($('#joincode')&&$('#joincode').value.trim())||'';
+  if(!v) return;
+  const code = v.includes('sync=') ? v.split('sync=')[1].split('&')[0] : v;
+  try{ localStorage.setItem('cc-sync-code', code); localStorage.removeItem('centauri-credit'); }catch(e){}
+  toast('☁️ Joining sync space…','Reloading with the shared data');
+  setTimeout(()=>{ location.href = location.pathname + '?sync=' + encodeURIComponent(code); }, 700);
+}
+function openDataModal(){
+  const st = window.SYNC_STATE||'offline';
+  const cloudOn = st==='synced'||st==='connecting';
+  openModal(`<h2>☁️ Data & Sync <span class="x" onclick="closeModal()">✕</span></h2>
+
+  <div style="background:var(--glass-2);border:1px solid var(--hairline);border-radius:14px;padding:14px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:650;margin-bottom:6px">${cloudOn?'🟢 Centauri Cloud: live sync '+(st==='synced'?'active':'connecting…'):'⚪ Centauri Cloud: not connected here'}</div>
+    <div style="font-size:11.5px;color:var(--ink-2);line-height:1.6">
+      ${cloudOn
+        ? 'Every change syncs in real time to every device signed into your sync space. Your data lives under a private random key — the link below <b>is the key</b>, so only share it with your own devices.'
+        : 'Cloud sync runs on the hosted app. Open <b>'+LIVE_URL.replace('https://','')+'</b> and your data syncs across all devices in real time. This copy still auto-saves locally.'}
+    </div>
+    ${window.CC_SYNC_CODE?`<div style="font-size:11px;color:var(--ink-3);margin-top:9px">Sync code: <code style="background:var(--glass-raise);padding:2px 7px;border-radius:6px;user-select:all">${esc(window.CC_SYNC_CODE)}</code></div>`:''}
+    <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">
+      <button class="btn sm primary" onclick="copySyncLink()">🔗 Copy sync link for other devices</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:9px">
+      <input id="joincode" placeholder="Paste a sync code or link from another device" style="flex:1;font-size:12px">
+      <button class="btn sm" onclick="joinSync()">Join</button>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--ink-2);line-height:1.6">Backups & Claude updates: export the data file and share it in your Claude chat with new screenshots or reports — Claude reads them and returns updated data.</p>
+  <div style="display:grid;gap:9px;margin-top:12px">
+    <button class="btn" onclick="exportData()">⬇️ Export data file (JSON)</button>
+    <label class="btn" style="justify-content:center">⬆️ Import data file<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
+    <button class="btn danger" onclick="if(confirm('Reset everything to the imported credit-report dataset?')){S=defaultState();persist('Reset to baseline');closeModal();render();toast('🔄 Reset complete','Baseline data restored');}">♻️ Reset to report baseline</button>
+  </div>
+  ${S.history.length?`<div style="margin-top:16px"><div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Version history</div>
+    ${S.history.slice(0,8).map(h=>`<div style="font-size:11.5px;color:var(--ink-2);padding:4px 0;border-bottom:1px solid var(--hairline)">🕐 ${new Date(h.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})} — ${esc(h.label)}</div>`).join('')}</div>`:''}`);
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'centauri-credit-data.json';
+  a.click();
+  toast('⬇️ Exported','centauri-credit-data.json downloaded','good');
+}
+function importData(input){
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(!d.scores || !d.accounts) throw new Error('bad');
+      S = d; persist('Imported data file'); closeModal(); render();
+      toast('☁️ Import complete','Your data is loaded and saved','good');
+    }catch(e){ toast('⚠️ Import failed','That file isn’t a Centauri Credit export','warn'); }
+  };
+  r.readAsText(f);
+}
+
+/* ---------- global search ---------- */
+function searchIndex(){
+  const ix = [];
+  S.accounts.forEach(a=>ix.push({k:'Account', t:`${a.emoji} ${a.name}`, s:`${a.type} · ${fmt$(a.balance)} balance`, blob:`${a.name} ${a.nickname} ${a.type} ${a.notes}`, go:()=>{go('accounts');setTimeout(()=>openAccount(a.id),60);}}));
+  S.tasks.forEach(t=>ix.push({k:'Task', t:`${t.emoji} ${t.title}`, s:`${t.prio} priority · due ${fmtDate(t.due)}`, blob:`${t.title} ${t.note}`, go:()=>go('tasks')}));
+  S.contacts.forEach(c=>ix.push({k:'Contact', t:`${c.emoji} ${c.name}`, s:`${c.kind} · ${c.phone}`,
+    blob:`${c.name} ${c.kind} ${c.notes} ${c.rep} ${(c.links||[]).map(l=>l.label+' '+l.url).join(' ')} ${(c.addresses||[]).map(a=>a.label+' '+a.text).join(' ')} ${(c.attachments||[]).map(a=>a.name).join(' ')}`,
+    go:()=>go('contacts')}));
+  S.timeline.forEach(e=>ix.push({k:'Timeline', t:`${e.emoji} ${e.text.replace(/<[^>]+>/g,'')}`, s:fmtDate(e.date)+' · '+e.tag, blob:e.text+' '+e.tag, go:()=>go('timeline')}));
+  S.goals.forEach(g=>ix.push({k:'Goal', t:`${g.emoji} ${g.title}`, s:g.note, blob:`${g.title} ${g.note} ${g.actions}`, go:()=>go('goals')}));
+  S.files.forEach(f=>ix.push({k:'Document', t:`${f.emoji} ${f.name}`, s:`${f.kind} · ${fmtDate(f.date)}`, blob:`${f.name} ${f.kind} ${f.extract}`, go:()=>go('files')}));
+  S.chat.forEach(m=>{ if(m.who==='me') ix.push({k:'AI chat', t:'💬 '+m.text.slice(0,70), s:'Centauri AI conversation', blob:m.text, go:()=>go('ai')}); });
+  return ix;
+}
+function bindSearch(){
+  const inp = $('#globalsearch'); if(!inp) return;
+  let box;
+  function close(){ if(box){box.remove(); box=null;} }
+  inp.addEventListener('input', ()=>{
+    const q = inp.value.trim().toLowerCase(); close();
+    if(q.length<2) return;
+    const hits = searchIndex().filter(x=>x.blob.toLowerCase().includes(q)).slice(0,9);
+    box = document.createElement('div');
+    box.className='card';
+    box.style.cssText='position:absolute;top:44px;left:0;right:0;z-index:70;padding:8px;max-height:380px;overflow-y:auto';
+    box.innerHTML = hits.length? hits.map((h,i)=>`<div class="search-hit" data-i="${i}"><div><div class="sh-t">${esc(h.t).slice(0,90)}</div><div class="sh-s">${esc(h.s)}</div></div><span class="sh-k">${h.k}</span></div>`).join('')
+      : `<div class="empty" style="padding:16px">No matches for “${esc(q)}”</div>`;
+    box.querySelectorAll('.search-hit').forEach((el,i)=>el.addEventListener('mousedown',e=>{ e.preventDefault(); hits[i].go(); close(); }));
+    inp.parentElement.appendChild(box);
+  });
+  inp.addEventListener('blur', ()=>setTimeout(close,180));
+  inp.addEventListener('keydown', e=>{ if(e.key==='Escape'){inp.value=''; close(); inp.blur();} });
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); const s=$('#globalsearch'); if(s) s.focus(); }
+});
+</script>
+<script>
+/* ================================================================
+   VIEWS
+   ================================================================ */
+function render(){
+  renderNav();
+  const V = { dashboard:vDashboard, accounts:vAccounts, tasks:vTasks, timeline:vTimeline,
+              goals:vGoals, simulator:vSimulator, ai:vAI, contacts:vContacts, files:vFiles };
+  (V[CC.view]||vDashboard)();
+  bindSearch();
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function scoreCardHTML(key){
+  const b = BMETA[key], sc = S.scores[key];
+  const hist = sc.history, prev = hist[hist.length-2], d = sc.current - prev;
+  const [band,bandTone] = scoreBand(sc.current);
+  const goal = S.profile.goalScore;
+  const goalPct = clamp((sc.current-450)/(goal-450)*100,2,100);
+  const proj = Math.min(850, sc.current + estimateGain());
+  const cvar = key==='experian'?'--exp':key==='equifax'?'--equ':'--tu';
+  const confN = 4; // static-ish confidence from data freshness
+  return `<div class="card score-card pop" style="--bc:var(${cvar})">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="bureau"><span class="bdot"></span>${b.label} <span style="font-weight:450;color:var(--ink-3);font-size:11px">· ${sc.model}</span></div>
+        <div class="score-big num">${sc.current}</div>
+        <div class="score-meta">
+          <span class="delta ${d>0?'up':d<0?'down':'flat'}">${d>0?'▲ +':d<0?'▼ ':''}${d===0?'— 0':Math.abs(d)} this mo</span>
+          <span class="badge ${bandTone}">${band}</span>
+        </div>
+      </div>
+      <div style="text-align:right">${sparkline(hist, `var(${cvar})`, 120, 44)}
+        <div style="font-size:10px;color:var(--ink-3);margin-top:4px">prev ${prev} · 12-mo trend</div></div>
+    </div>
+    <div class="mini-goal">
+      <div class="lbl"><span>Goal ${goal}</span><span>${sc.current>=goal?'reached 🎉':goal-sc.current+' pts to go'}</span></div>
+      <div class="meter"><i style="width:${goalPct}%;background:var(${cvar})"></i></div>
+    </div>
+    <div class="score-foot">
+      <span>🕐 Updated ${fmtDate(S.lastUpdated)}</span>
+      <span class="conf">Proj. <b style="color:var(--ink-1)">${proj}</b>
+        <span class="pips">${[1,2,3,4,5].map(i=>`<i class="${i<=confN?'on':''}"></i>`).join('')}</span></span>
+    </div>
+  </div>`;
+}
+function estimateGain(){
+  /* projection: sub-10% statements reporting (~+25) + first dispute win (~+10 avg) */
+  let g = 0; const u = totalUtil();
+  if(u < 10) g += 25;           // paid-down balances not yet reported
+  else if(u < 30) g += 10;
+  if(hasCollections()) g += 10; // at least one dispute/deletion landing
+  return g;
+}
+function vDashboard(){
+  $('#topbar').innerHTML = topbarHTML(`Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${esc(S.profile.name)} 👋`,
+    `${fmtDate(todayISO())} · Avg FICO <b style="color:var(--ink-1)">${avgScore()}</b> · Utilization ${fmtPct(totalUtil())}`,
+    `<button class="btn primary" style="display:none" id="_x"></button>`);
+  const f = factors();
+  const openTasks = S.tasks.filter(t=>!t.done);
+  const suggs = suggestions().slice(0,3);
+  $('#view').innerHTML = `
+  <div class="grid g3 section">${BUREAU_CARDS.map(scoreCardHTML).join('')}</div>
+
+  <div class="grid section" style="grid-template-columns:5fr 4fr">
+    <div class="card"><h3>📊 12-Month Score Trend <span class="more" onclick="go('timeline')">history →</span></h3>${trendChart()}</div>
+    <div class="card"><h3>❤️ Credit Health</h3>
+      <div class="ring-wrap">${healthRing()}
+        <div class="ring-tips">
+          ${healthTips().map(t=>`<div class="tip-row"><span class="ti">${t[0]}</span><span>${t[1]}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">🧬 FICO Score Factors</div>
+  <div class="grid g5 section">
+    ${f.map(x=>`<div class="card factor" onclick="openFactor('${x.key}')">
+      <div class="fh">${x.emoji} ${x.name} <span class="weight">${x.weight}</span></div>
+      <div class="rate"><span class="badge ${x.tone}" style="font-size:12px;padding:4px 11px">${x.rating}</span></div>
+      <div class="fsub">${x.sub}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--ink-3)">
+        <span>⏱ ${x.plan}</span><span class="impact-chip">${x.gain}</span></div>
+    </div>`).join('')}
+  </div>
+
+  ${S.scoreVersions && S.scoreVersions.length ? `
+  <div class="sec-title">🧪 Every FICO Version Lenders Pull <span style="text-transform:none;letter-spacing:0;font-weight:450">· from your 6/13 myFICO report</span></div>
+  <div class="card section">
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Score model</th>
+        <th><span style="color:var(--exp)">●</span> Experian</th>
+        <th><span style="color:var(--equ)">●</span> Equifax</th>
+        <th><span style="color:var(--tu)">●</span> TransUnion</th></tr></thead>
+      <tbody>${S.scoreVersions.map(v=>`<tr style="cursor:default">
+        <td style="font-weight:${v.model.includes('FICO 8 ')?'650':'450'}">${esc(v.model)}</td>
+        <td class="num">${v.exp}</td><td class="num">${v.equ}</td><td class="num"><b>${v.tu}</b></td>
+      </tr>`).join('')}</tbody></table></div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:9px">TransUnion is your strongest bureau on every model — FICO Auto 5/4/2 at <b style="color:var(--ink-1)">640</b> is already fair-rate territory for many auto lenders.</div>
+  </div>` : ''}
+
+  <div class="grid section" style="grid-template-columns:3fr 2fr">
+    <div class="card"><h3>💡 Centauri AI Suggestions <span class="more" onclick="go('ai')">ask AI →</span></h3>
+      ${suggs.map(sugHTML).join('')}
+    </div>
+    <div style="display:grid;gap:16px;align-content:start">
+      <div class="card"><h3>✅ Next Up <span class="more" onclick="go('tasks')">all tasks →</span></h3>
+        ${openTasks.slice(0,4).map(taskRowHTML).join('') || '<div class="empty"><div class="e-ico">🎉</div>All caught up!</div>'}
+      </div>
+      <div class="card"><h3>📜 Recent Activity <span class="more" onclick="go('timeline')">timeline →</span></h3>
+        <div class="tl">${S.timeline.slice(0,3).map(tlHTML).join('')}</div>
+      </div>
+    </div>
+  </div>`;
+  bindTrendHover(); animateRing();
+  fixDashGrid();
+}
+function fixDashGrid(){
+  if(window.innerWidth<=1060){
+    document.querySelectorAll('#view .grid[style*="5fr"],#view .grid[style*="3fr"]').forEach(g=>g.style.gridTemplateColumns='1fr');
+  }
+}
+window.addEventListener('resize', ()=>{ if(CC.view==='dashboard') fixDashGrid(); });
+function healthTips(){
+  const u = totalUtil(); const tips = [];
+  tips.push(['🟢',`Live balances are down to ${fmt$(revolvers().reduce((s,a)=>s+a.balance,0))} (${fmtPct(u)}) — a +20–40 pt lift arrives when July statements report.`]);
+  const nu = unpaidDerogs();
+  if(nu.length) tips.push(['🔴',`${nu.length} unpaid derogatories (${nu.map(a=>a.name.split(' ')[0]).join(' · ')}, ${fmt$(nu.reduce((s,a)=>s+a.balance,0))} total) are the ceiling on your score.`]);
+  tips.push(['🔵','Equifax (540) lags 50+ pts on fixable errors: a duplicate Cap One tradeline + AT&T shown unpaid there but PAID on Experian. Dispute both.']);
+  tips.push(['🟣','Initial fraud alert active until May 20, 2027 — removal steps for all 3 bureaus are saved in Tasks & Contacts.']);
+  return tips.slice(0,4);
+}
+function sugHTML(x,i){
+  return `<div class="sugg">
+    <span class="rank">${x.rank}</span>
+    <div style="flex:1;min-width:0">
+      <div class="sugg-title">${esc(x.title)}</div>
+      <div class="sugg-body">${esc(x.body)}</div>
+      <div class="sugg-meta">
+        <span class="impact-chip">📈 ${esc(x.impact)}</span>
+        <span class="badge neutral">🎚 ${esc(x.diff)}</span>
+        <span class="badge neutral">⏱ ${esc(x.time)}</span>
+        <span class="badge neutral">💵 ${esc(x.cost)}</span>
+      </div>
+      ${x.act?`<div class="sugg-actions"><button class="btn sm primary" onclick='suggestToTask(${JSON.stringify(JSON.stringify(x.act))})'>➕ Add as task</button></div>`:''}
+    </div></div>`;
+}
+function suggestToTask(json){
+  const a = JSON.parse(JSON.parse(json));
+  if(S.tasks.some(t=>t.title===a.title && !t.done)) return toast('👌 Already on your list', a.title);
+  S.tasks.unshift({ id:uid('t'), emoji:a.emoji, title:a.title, prio:a.prio, due:'', impact:a.impact, done:false, note:'Added from AI suggestion' });
+  addEvent('✅', `<b>Task added:</b> ${esc(a.title)}`, 'Task');
+  persist('Added task: '+a.title);
+  toast('✅ Task added', a.title, 'good');
+  render();
+}
+function openFactor(key){
+  const x = factors().find(f=>f.key===key);
+  openModal(`<h2>${x.emoji} ${x.name} <span class="x" onclick="closeModal()">✕</span></h2>
+    <div style="display:flex;gap:8px;margin-bottom:12px"><span class="badge ${x.tone}" style="font-size:12px;padding:4px 11px">${x.rating}</span><span class="badge neutral">FICO weight ${x.weight}</span></div>
+    <p style="font-size:13px;color:var(--ink-2);line-height:1.6">${x.sub}</p>
+    <div style="margin-top:13px;font-size:12.5px;display:grid;gap:7px">
+      <div>⏱ <b>Improvement timeline:</b> ${x.plan}</div>
+      <div>📈 <b>Projected gain:</b> ${x.gain} <span style="color:var(--ink-3)">(estimate, not a guarantee)</span></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal();go('ai')">⭐ Ask Centauri AI</button><button class="btn primary" onclick="closeModal()">Got it</button></div>`);
+}
+
+/* ---------------- ACCOUNTS ---------------- */
+function vAccounts(){
+  $('#topbar').innerHTML = topbarHTML('💳 Account Center', `${S.accounts.length} tradelines · ${fmtPct(totalUtil())} overall utilization · ${fmt$(revolvers().reduce((s,a)=>s+a.limit,0))} total limits`);
+  const rows = S.accounts.map(a=>{
+    const rev = isRevolving(a);
+    const u = acctUtil(a);
+    const [ub,ut] = utilBadge(u);
+    const paid = a.limit? clamp((1-a.balance/a.limit)*100,0,100) : 0;
+    const utilCol = rev && a.limit
+      ? `<div class="lbl"><span class="num">${fmtPct(u)}</span><span class="badge ${ut}" style="font-size:9px;padding:1px 6px">${ub}</span></div>${utilBar(u,true)}`
+      : a.limit
+      ? `<div class="lbl"><span class="num">${fmtPct(paid)} paid</span><span class="badge info" style="font-size:9px;padding:1px 6px">Loan</span></div><div class="meter" style="height:5px"><i style="width:${paid}%;background:var(--info)"></i></div>`
+      : '<span style="color:var(--ink-3)">n/a</span>';
+    return `<tr onclick="openAccount('${a.id}')">
+      <td><div class="acct-name"><div class="acct-logo">${a.emoji}</div>
+        <div>${esc(a.name)}<div class="acct-sub">${a.logo} ${esc(a.nickname)} · ${esc(a.type)}</div></div></div></td>
+      <td class="num">${fmt$(a.balance)}</td>
+      <td class="num hide-m">${a.limit?fmt$(a.limit):'—'}</td>
+      <td class="util-cell">${utilCol}</td>
+      <td class="hide-m num">${a.apr?a.apr+'%':'—'}</td>
+      <td class="hide-m">${a.dueDay?('Day '+a.dueDay):'—'}</td>
+      <td class="hide-t"><span class="badge ${/Collection|Charge-Off/i.test(a.status)?'crit':/Current/.test(a.status)?'good':'neutral'}" style="white-space:nowrap">${esc(a.status)}</span></td>
+    </tr>`;
+  }).join('');
+  $('#view').innerHTML = `
+  <div class="grid g3 section">
+    ${statTile('Total revolving balance', fmt$(revolvers().reduce((s,a)=>s+a.balance,0)), '−$594 vs June statements ($678)', 'up-good-down')}
+    ${statTile('Live utilization', fmtPct(totalUtil()), 'June statements reported 87–101% on Cap One', 'up-good-down')}
+    ${statTile('Monthly obligations', fmt$(S.accounts.reduce((s,a)=>s+(a.payment||0),0)), 'across '+S.accounts.filter(a=>a.payment>0).length+' accounts')}
+  </div>
+  <div class="card">
+    <h3>All Accounts <span class="more" onclick="openAccountForm()">➕ Add account</span></h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Account</th><th>Balance</th><th class="hide-m">Limit</th><th>Utilization</th><th class="hide-m">APR</th><th class="hide-m">Due</th><th class="hide-t">Status</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+  </div>`;
+}
+function statTile(label, value, delta, dir){
+  const up = delta && delta.trim().startsWith('−');
+  const good = dir==='up-good-down' ? up : !up;
+  return `<div class="card"><div style="font-size:11.5px;color:var(--ink-3)">${label}</div>
+    <div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin:5px 0 3px">${value}</div>
+    ${delta?`<div style="font-size:11.5px;color:${dir?`var(--${good?'good-text':'crit-text'})`:'var(--ink-3)'}">${delta}</div>`:''}</div>`;
+}
+function openAccount(id){
+  const a = S.accounts.find(x=>x.id===id); if(!a) return;
+  const u = acctUtil(a);
+  openModal(`<h2>${a.emoji} ${esc(a.name)} <span class="x" onclick="closeModal()">✕</span></h2>
+  <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+    <span class="badge ${/Collection|Charge-Off/i.test(a.status)?'crit':/Current/.test(a.status)?'good':'neutral'}">${esc(a.status)}</span>
+    <span class="badge neutral">${esc(a.type)}</span>
+    <span class="badge info">Opened ${a.opened||'—'}</span>
+    ${a.bureaus.map(b=>`<span class="badge" style="color:var(--${b==='EXP'?'exp':b==='EQU'?'equ':'tu'});background:var(--glass-raise)">${b==='EXP'?'🟢 EXP':b==='EQU'?'🔵 EQU':'🟣 TU'}</span>`).join('')}
+  </div>
+  <div class="form-grid" style="font-size:13px">
+    <div>💰 Balance<br><b style="font-size:19px" class="num">${fmt$(a.balance)}</b></div>
+    <div>🎚 Limit / Orig.<br><b style="font-size:19px" class="num">${a.limit?fmt$(a.limit):'—'}</b></div>
+    <div>📊 ${isRevolving(a)?'Utilization':'Paid down'}<br><b class="num">${a.limit?(isRevolving(a)?fmtPct(u):fmtPct(clamp((1-a.balance/a.limit)*100,0,100))):'n/a'}</b></div>
+    <div>％ APR<br><b class="num">${a.apr?a.apr+'%':'—'}</b></div>
+    <div>💵 Payment<br><b class="num">${a.payment?fmt$(a.payment)+'/mo':'—'}</b></div>
+    <div>📅 Due<br><b>${a.dueDay?'Day '+a.dueDay:'—'}</b></div>
+  </div>
+  ${a.limit && isRevolving(a)?`<div style="margin:13px 0">${utilBar(u)}</div>`:''}
+  <div style="font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:8px">
+    <div style="margin-bottom:6px"><b>Payment history:</b> ${esc(a.history)}</div>
+    <div><b>📝 Notes:</b> ${esc(a.notes)}</div>
+    <div style="margin-top:6px;color:var(--ink-3)">📎 ${a.attachments} attachment${a.attachments===1?'':'s'} in File Center</div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn danger sm" onclick="deleteAccount('${a.id}')">🗑 Remove</button>
+    <button class="btn" onclick="openAccountForm('${a.id}')">✏️ Edit</button>
+    <button class="btn primary" onclick="promptPayment('${a.id}')">💰 Log payment</button>
+  </div>`);
+}
+function deleteAccount(id){
+  const a = S.accounts.find(x=>x.id===id);
+  if(!confirm(`Remove ${a.name} from the dashboard?`)) return;
+  S.accounts = S.accounts.filter(x=>x.id!==id);
+  addEvent('🗑', `<b>Account removed:</b> ${esc(a.name)}`, 'Account');
+  persist('Removed account '+a.name); closeModal(); render();
+}
+function openAccountForm(id){
+  const a = id? S.accounts.find(x=>x.id===id) : null;
+  openModal(`<h2>${a?'✏️ Edit':'➕ Add'} Account <span class="x" onclick="closeModal()">✕</span></h2>
+  <div class="form-grid">
+    <div class="fld full"><label>Account name</label><input id="af-name" value="${a?esc(a.name):''}" placeholder="Chase Sapphire"></div>
+    <div class="fld"><label>Nickname</label><input id="af-nick" value="${a?esc(a.nickname):''}" placeholder="Travel card"></div>
+    <div class="fld"><label>Type</label><select id="af-type">${['Credit Card','Charge Card','Authorized User','Auto Loan','Mortgage','Student Loan','Personal Loan','Collection'].map(t=>`<option ${a&&a.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    <div class="fld"><label>Emoji</label><input id="af-emoji" value="${a?a.emoji:'💳'}"></div>
+    <div class="fld"><label>Balance ($)</label><input id="af-bal" type="number" value="${a?a.balance:''}"></div>
+    <div class="fld"><label>Limit / original ($)</label><input id="af-lim" type="number" value="${a?a.limit:''}"></div>
+    <div class="fld"><label>APR %</label><input id="af-apr" type="number" step="0.01" value="${a?a.apr:''}"></div>
+    <div class="fld"><label>Monthly payment ($)</label><input id="af-pay" type="number" value="${a?a.payment:''}"></div>
+    <div class="fld"><label>Due day (1–31)</label><input id="af-due" type="number" min="0" max="31" value="${a?a.dueDay:''}"></div>
+    <div class="fld"><label>Opened (YYYY-MM)</label><input id="af-open" value="${a?a.opened:''}" placeholder="2023-05"></div>
+    <div class="fld"><label>Status</label><input id="af-status" value="${a?esc(a.status):'Open · Current'}"></div>
+    <div class="fld full"><label>Notes</label><textarea id="af-notes" rows="2">${a?esc(a.notes):''}</textarea></div>
+  </div>
+  <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+  <button class="btn primary" onclick="saveAccount('${id||''}')">💾 Save</button></div>`);
+}
+function saveAccount(id){
+  const v = k => $('#af-'+k).value;
+  const data = { name:v('name')||'Untitled', nickname:v('nick'), type:v('type'), emoji:v('emoji')||'💳',
+    balance:+v('bal')||0, limit:+v('lim')||0, apr:+v('apr')||0, payment:+v('pay')||0, dueDay:+v('due')||0,
+    opened:v('open'), status:v('status')||'Open · Current', notes:v('notes') };
+  if(id){ Object.assign(S.accounts.find(x=>x.id===id), data); addEvent('✏️',`<b>Account updated:</b> ${esc(data.name)}`,'Account'); }
+  else { S.accounts.push({ id:uid('a'), logo:'🏦', bureaus:['EXP','EQU','TU'], history:'—', attachments:0, ...data });
+    addEvent('💳',`<b>New account added:</b> ${esc(data.name)} (${esc(data.type)})`,'New tradeline'); }
+  persist((id?'Edited ':'Added ')+data.name); closeModal(); render();
+  toast('💾 Saved', data.name + ' — dashboard, utilization & suggestions updated','good');
+}
+function promptPayment(id){
+  const a = S.accounts.find(x=>x.id===id);
+  const amt = prompt(`How much did you pay toward ${a.name}?`, Math.min(a.balance, 100));
+  if(amt===null) return;
+  applyPayment(a, parseFloat(amt)||0, true);
+  closeModal(); render();
+}
+function applyPayment(a, amt, fromUI){
+  const before = totalUtil();
+  a.balance = Math.max(0, a.balance - amt);
+  const after = totalUtil();
+  const gain = estimatePaymentGain(before, after);
+  addEvent('💰', `<b>Payment logged:</b> ${fmt$(amt)} to ${esc(a.name)}. Balance now ${fmt$(a.balance)}.`, 'Payment');
+  const t = S.tasks.find(t=>!t.done && t.title.toLowerCase().includes(a.name.split(' ')[0].toLowerCase()) && /pay/i.test(t.title));
+  if(t){ t.done = true; addEvent('✅', `<b>Task completed:</b> ${esc(t.title)}`, 'Task'); }
+  persist(`Payment ${fmt$(amt)} → ${a.name}`);
+  if(a.balance===0){ celebrate(); toast('🚀 Milestone!', `${a.name} is PAID OFF. Estimated impact ${gain}`, 'good'); addEvent('🎉',`<b>${esc(a.name)} paid off!</b> Reported utilization will drop next statement.`,'Milestone'); }
+  else toast('💰 Payment saved', `Utilization ${fmtPct(before)} → ${fmtPct(after)} · est. ${gain}`, 'good');
+  return gain;
+}
+function estimatePaymentGain(before, after){
+  const bands = u => u<10?4:u<30?3:u<50?2:u<75?1:0;
+  const jump = bands(after)-bands(before);
+  return jump>=2? '+15–30 pts' : jump===1? '+8–18 pts' : '+2–8 pts';
+}
+
+/* ---------------- TASKS ---------------- */
+function taskRowHTML(t){
+  return `<div class="task-row ${t.done?'done':''}">
+    <button class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')" aria-label="toggle">${t.done?'✓':''}</button>
+    <div class="task-body">
+      <div class="task-title">${t.emoji} ${esc(t.title)}</div>
+      <div class="task-meta">
+        <span class="prio ${t.prio}">${t.prio.toUpperCase()}</span>
+        ${t.due?`<span>📅 ${fmtDate(t.due)}</span>`:''}
+        ${t.impact?`<span class="impact-chip">📈 ${esc(t.impact)}</span>`:''}
+        ${t.note?`<span style="color:var(--ink-3)">· ${esc(t.note)}</span>`:''}
+      </div>
+    </div>
+    <button style="color:var(--ink-3);font-size:13px;padding:4px" title="Delete" onclick="deleteTask('${t.id}')">✕</button>
+  </div>`;
+}
+function vTasks(){
+  const open = S.tasks.filter(t=>!t.done), done = S.tasks.filter(t=>t.done);
+  const pct = S.tasks.length? Math.round(done.length/S.tasks.length*100) : 0;
+  $('#topbar').innerHTML = topbarHTML('✅ Task Center', `${open.length} open · ${done.length} complete`,
+    `<button class="btn primary" onclick="openTaskForm()">➕ New task</button>`);
+  $('#view').innerHTML = `
+  <div class="card section">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:7px"><span>Overall progress</span><b>${pct}%</b></div>
+    ${'<div class="meter" style="height:9px"><i style="width:'+pct+'%;background:linear-gradient(90deg,#2a63d6,#7b3ff0)"></i></div>'}
+  </div>
+  <div class="grid g2 section" style="align-items:start">
+    <div class="card"><h3>⏳ Open (${open.length})</h3>${open.map(taskRowHTML).join('')||'<div class="empty"><div class="e-ico">🎉</div>Nothing pending</div>'}</div>
+    <div class="card"><h3>✅ Completed (${done.length})</h3>${done.map(taskRowHTML).join('')||'<div class="empty"><div class="e-ico">📭</div>None yet</div>'}</div>
+  </div>`;
+}
+function toggleTask(id){
+  const t = S.tasks.find(x=>x.id===id); t.done = !t.done;
+  if(t.done){
+    addEvent('✅', `<b>Task completed:</b> ${esc(t.title)}`, 'Task');
+    toast('✅ Nice!', t.title + (t.impact&&t.impact.includes('pts')?' · est. '+t.impact:''), 'good');
+    if(S.tasks.every(x=>x.done)) celebrate();
+  }
+  persist((t.done?'Completed':'Reopened')+' task: '+t.title); render();
+}
+function deleteTask(id){
+  const t = S.tasks.find(x=>x.id===id);
+  S.tasks = S.tasks.filter(x=>x.id!==id);
+  persist('Deleted task '+t.title); render();
+}
+function openTaskForm(){
+  openModal(`<h2>➕ New Task <span class="x" onclick="closeModal()">✕</span></h2>
+  <div class="form-grid">
+    <div class="fld full"><label>Task</label><input id="tf-title" placeholder="Call TransUnion about dispute"></div>
+    <div class="fld"><label>Priority</label><select id="tf-prio"><option value="high">🔥 High</option><option value="med" selected>⚡ Medium</option><option value="low">💡 Low</option></select></div>
+    <div class="fld"><label>Due date</label><input id="tf-due" type="date"></div>
+    <div class="fld"><label>Emoji</label><input id="tf-emoji" value="📌"></div>
+    <div class="fld"><label>Est. score impact</label><input id="tf-impact" placeholder="+5–10 pts"></div>
+    <div class="fld full"><label>Note</label><input id="tf-note"></div>
+  </div>
+  <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+  <button class="btn primary" onclick="saveTask()">💾 Add task</button></div>`);
+}
+function saveTask(){
+  const title = $('#tf-title').value.trim(); if(!title) return;
+  S.tasks.unshift({ id:uid('t'), emoji:$('#tf-emoji').value||'📌', title, prio:$('#tf-prio').value, due:$('#tf-due').value, impact:$('#tf-impact').value, note:$('#tf-note').value, done:false });
+  addEvent('✅', `<b>Task added:</b> ${esc(title)}`, 'Task');
+  persist('Added task '+title); closeModal(); render(); toast('✅ Task added', title,'good');
+}
+
+/* ---------------- TIMELINE ---------------- */
+function tlHTML(e){
+  return `<div class="tl-item"><div class="tl-dot">${e.emoji}</div>
+    <div class="tl-date">${fmtDate(e.date)} · <span class="tl-tag">${esc(e.tag)}</span></div>
+    <div class="tl-txt">${e.text}</div></div>`;
+}
+function vTimeline(){
+  $('#topbar').innerHTML = topbarHTML('📜 Timeline', 'Every event in your credit journey, newest first',
+    `<button class="btn primary" onclick="openEventForm()">➕ Log event</button>`);
+  const groups = {};
+  S.timeline.forEach(e=>{ const m = e.date.slice(0,7); (groups[m]=groups[m]||[]).push(e); });
+  $('#view').innerHTML = `<div class="card" style="max-width:760px">
+    ${Object.keys(groups).sort().reverse().map(m=>{
+      const label = new Date(m+'-15T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      return `<div class="sec-title" style="margin-top:8px">${label}</div><div class="tl">${groups[m].map(tlHTML).join('')}</div>`;
+    }).join('')}
+  </div>`;
+}
+function addEvent(emoji, html, tag){
+  S.timeline.unshift({ id:uid('e'), date:todayISO(), emoji, text:html, tag });
+}
+function openEventForm(){
+  openModal(`<h2>➕ Log Event <span class="x" onclick="closeModal()">✕</span></h2>
+  <div class="form-grid">
+    <div class="fld full"><label>What happened?</label><input id="ef-text" placeholder="Received dispute results from Experian"></div>
+    <div class="fld"><label>Emoji</label><input id="ef-emoji" value="📌"></div>
+    <div class="fld"><label>Category</label><select id="ef-tag">${['Score change','Payment','Dispute','Letter','Utilization','Milestone','New tradeline','Inquiry','Call','Note'].map(t=>`<option>${t}</option>`).join('')}</select></div>
+    <div class="fld"><label>Date</label><input id="ef-date" type="date" value="${todayISO()}"></div>
+  </div>
+  <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+  <button class="btn primary" onclick="saveEvent()">💾 Log it</button></div>`);
+}
+function saveEvent(){
+  const txt = $('#ef-text').value.trim(); if(!txt) return;
+  S.timeline.unshift({ id:uid('e'), date:$('#ef-date').value||todayISO(), emoji:$('#ef-emoji').value||'📌', text:esc(txt), tag:$('#ef-tag').value });
+  S.timeline.sort((a,b)=>b.date.localeCompare(a.date));
+  persist('Logged event'); closeModal(); render(); toast('📜 Event logged', txt,'good');
+}
+
+/* ---------------- GOALS ---------------- */
+function vGoals(){
+  $('#topbar').innerHTML = topbarHTML('🎯 Goals', 'Where you’re headed — and exactly how far is left');
+  const avg = avgScore();
+  $('#view').innerHTML = `<div class="grid g2 section">
+  ${S.goals.map(g=>{
+    const pct = clamp(Math.round((avg-450)/(g.target-450)*100),2,100);
+    const remaining = Math.max(0, g.target-avg);
+    return `<div class="card goal-card">
+      <div class="gh">${g.emoji} ${esc(g.title)} <span class="goal-pct num">${pct}%</span></div>
+      <div class="goal-sub">${esc(g.note)}</div>
+      <div style="margin:13px 0 7px">${'<div class="meter" style="height:9px"><i style="width:'+pct+'%;background:linear-gradient(90deg,#2a63d6,#7b3ff0)"></i></div>'}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3)">
+        <span>${remaining>0?`<b style="color:var(--ink-1)" class="num">${remaining}</b> pts to go (avg ${avg} → ${g.target})`:'🎉 Target met on average!'}</span>
+        <span>📅 est. ${esc(g.eta)}</span></div>
+      <div class="goal-next">🧭 <span><b>Next actions:</b> ${esc(g.actions)}</span></div>
+    </div>`;
+  }).join('')}
+  </div>
+  <div class="est-note" style="max-width:640px;margin:0 auto">Progress is measured from a 450 baseline to each target using your three-bureau FICO 8 average (${avg}). Estimated dates assume the disputes land and no new lates — projections, not guarantees.</div>`;
+}
+
+/* ---------------- CONTACTS ---------------- */
+function vContacts(){
+  $('#topbar').innerHTML = topbarHTML('📞 Contacts', 'Bureaus, banks, collectors — numbers, links, mailing addresses, and attached documents',
+    `<button class="btn primary" onclick="openContactForm()">➕ Add contact</button>`);
+  $('#view').innerHTML = `<div class="grid g3 section" style="align-items:start">
+  ${S.contacts.map(contactCardHTML).join('')}
+  </div>`;
+}
+function contactCardHTML(c){
+  const links = c.links||[], addrs = c.addresses||[], atts = c.attachments||[];
+  return `<div class="card contact-card">
+    <div class="ch"><div class="acct-logo" style="font-size:18px">${c.emoji}</div>
+      <div><b style="font-size:14px">${esc(c.name)}</b><div class="acct-sub">${esc(c.kind)}${c.rep&&c.rep!=='—'?' · '+esc(c.rep):''}</div></div></div>
+    <div class="cb">
+      ${c.phone&&c.phone!=='—'?`<div class="crow"><span class="ci">📞</span><a href="tel:${c.phone.replace(/[^0-9+]/g,'')}">${esc(c.phone)}</a></div>`:''}
+      ${c.email?`<div class="crow"><span class="ci">📧</span><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div>`:''}
+      ${c.web?`<div class="crow"><span class="ci">🌐</span><a href="${/^https?:/.test(c.web)?esc(c.web):'https://'+esc(c.web)}" target="_blank" rel="noopener">${esc(c.web.replace(/^https?:\/\//,''))}</a></div>`:''}
+      ${links.map(l=>`<div class="crow"><span class="ci">🔗</span><a href="${/^https?:/.test(l.url)?esc(l.url):'https://'+esc(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a></div>`).join('')}
+      ${addrs.map(a=>`<div class="crow" style="align-items:flex-start"><span class="ci">✉️</span><span style="line-height:1.5">${a.label?`<b>${esc(a.label)}:</b><br>`:''}${esc(a.text)}</span></div>`).join('')}
+      ${c.hours&&c.hours!=='—'?`<div class="crow"><span class="ci">🕐</span>${esc(c.hours)}</div>`:''}
+      <div class="crow"><span class="ci">📅</span>Last: ${fmtDate(c.last)} ${c.next?`· <b style="color:var(--warn)">Next: ${fmtDate(c.next)}</b>`:''}</div>
+      ${c.notes?`<div class="crow" style="align-items:flex-start"><span class="ci">📝</span><span style="line-height:1.5">${esc(c.notes)}</span></div>`:''}
+      ${atts.length?`<div class="crow" style="align-items:flex-start;flex-wrap:wrap;gap:6px"><span class="ci">📎</span>
+        ${atts.map((a,i)=>`<button class="chip" style="font-size:10px" onclick="openAttachment('${c.id}',${i})">${attSrc(a)?'🖼️':'📄'} ${esc(a.name.length>26? a.name.slice(0,24)+'…':a.name)}</button>`).join('')}</div>`:''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:13px;flex-wrap:wrap">
+      <button class="btn sm" onclick="logCall('${c.id}')">📞 Log call</button>
+      <button class="btn sm" onclick="openContactForm('${c.id}')">✏️ Edit</button>
+      <button class="btn sm ghost" onclick="deleteContact('${c.id}')" style="color:var(--ink-3)">🗑</button>
+    </div>
+  </div>`;
+}
+function openAttachment(cid, idx){
+  const c = S.contacts.find(x=>x.id===cid); if(!c) return;
+  const a = (c.attachments||[])[idx]; if(!a) return;
+  openModal(`<h2>📎 ${esc(a.name)} <span class="x" onclick="closeModal()">✕</span></h2>
+    <div style="font-size:12px;color:var(--ink-3);margin-bottom:11px">${esc(a.kind||'File')} · added ${fmtDate(a.date)}${a.note?` · ${esc(a.note)}`:''}</div>
+    ${attSrc(a)? `<img src="${attSrc(a)}" style="max-width:100%;border-radius:12px;border:1px solid var(--hairline)">`
+      : `<div class="empty"><div class="e-ico">📄</div>Stored as a reference. To re-extract its contents, share the original file with Claude in your chat.</div>`}
+    <div class="modal-foot">
+      <button class="btn danger sm" onclick="removeContactAtt('${cid}',${idx})">🗑 Remove</button>
+      <button class="btn primary" onclick="closeModal()">Done</button></div>`);
+}
+function removeContactAtt(cid, idx){
+  const c = S.contacts.find(x=>x.id===cid); if(!c) return;
+  c.attachments.splice(idx,1);
+  persist('Removed attachment from '+c.name); closeModal(); render();
+}
+function logCall(id){
+  const c = S.contacts.find(x=>x.id===id);
+  const note = prompt(`Log a call with ${c.name} — what happened?`);
+  if(note===null) return;
+  c.last = todayISO();
+  if(note) c.notes = note;
+  addEvent('📞', `<b>Call with ${esc(c.name)}:</b> ${esc(note||'(no notes)')}`, 'Call');
+  persist('Logged call with '+c.name); render(); toast('📞 Call logged', c.name,'good');
+}
+function deleteContact(id){
+  const c = S.contacts.find(x=>x.id===id);
+  if(!confirm('Remove '+c.name+'?')) return;
+  S.contacts = S.contacts.filter(x=>x.id!==id); persist('Removed contact'); render();
+}
+
+/* ---- contact editor with links / addresses / attachments ---- */
+function openContactForm(id){
+  CC.editC = id
+    ? JSON.parse(JSON.stringify(S.contacts.find(x=>x.id===id)))
+    : { id:'', emoji:'🏦', name:'', kind:'Bank', phone:'', email:'', web:'', rep:'—', hours:'', last:'', next:'', notes:'', links:[], addresses:[], attachments:[] };
+  CC.editC.links = CC.editC.links||[]; CC.editC.addresses = CC.editC.addresses||[]; CC.editC.attachments = CC.editC.attachments||[];
+  renderContactForm();
+}
+function syncContactForm(){
+  const v = k => { const el = $('#cf-'+k); return el? el.value : (CC.editC[k]||''); };
+  Object.assign(CC.editC, { name:v('name'), kind:v('kind'), emoji:v('emoji')||'🏦', phone:v('phone'), email:v('email'),
+    web:v('web'), hours:v('hours'), rep:v('rep')||'—', next:v('next'), notes:v('notes') });
+  CC.editC.links.forEach((l,i)=>{ const a=$('#lk-l-'+i), b=$('#lk-u-'+i); if(a) l.label=a.value; if(b) l.url=b.value; });
+  CC.editC.addresses.forEach((a,i)=>{ const x=$('#ad-l-'+i), y=$('#ad-t-'+i); if(x) a.label=x.value; if(y) a.text=y.value; });
+}
+function renderContactForm(){
+  const c = CC.editC;
+  openModal(`<h2>${c.id?'✏️ Edit':'➕ Add'} Contact <span class="x" onclick="closeModal()">✕</span></h2>
+  <div class="form-grid">
+    <div class="fld"><label>Name</label><input id="cf-name" value="${esc(c.name)}" placeholder="Navy Federal"></div>
+    <div class="fld"><label>Type</label><select id="cf-kind">${['Bank','Credit Bureau','Collector','Attorney','Lender','Credit Union','Other'].map(k=>`<option ${c.kind===k?'selected':''}>${k}</option>`).join('')}</select></div>
+    <div class="fld"><label>Emoji</label><input id="cf-emoji" value="${esc(c.emoji)}"></div>
+    <div class="fld"><label>Phone</label><input id="cf-phone" value="${esc(c.phone)}" placeholder="1-800-…"></div>
+    <div class="fld"><label>Email</label><input id="cf-email" value="${esc(c.email||'')}" placeholder="support@…"></div>
+    <div class="fld"><label>Main website</label><input id="cf-web" value="${esc(c.web||'')}" placeholder="site.com"></div>
+    <div class="fld"><label>Hours</label><input id="cf-hours" value="${esc(c.hours||'')}" placeholder="Mon–Fri 9–5"></div>
+    <div class="fld"><label>Representative</label><input id="cf-rep" value="${esc(c.rep||'')}" placeholder="“Marcus” ext 4415"></div>
+    <div class="fld"><label>Next follow-up</label><input id="cf-next" type="date" value="${esc(c.next||'')}"></div>
+    <div class="fld full"><label>Notes</label><textarea id="cf-notes" rows="2">${esc(c.notes||'')}</textarea></div>
+  </div>
+
+  <div class="fld full" style="margin-top:14px"><label>🔗 Links</label>
+    ${c.links.map((l,i)=>`<div style="display:flex;gap:7px;margin-bottom:7px">
+      <input id="lk-l-${i}" value="${esc(l.label||'')}" placeholder="Label (e.g. Dispute portal)" style="flex:2">
+      <input id="lk-u-${i}" value="${esc(l.url||'')}" placeholder="https://…" style="flex:3">
+      <button class="icon-btn" style="width:34px;height:34px;flex-shrink:0" onclick="syncContactForm();CC.editC.links.splice(${i},1);renderContactForm()">✕</button></div>`).join('')}
+    <button class="btn sm" onclick="syncContactForm();CC.editC.links.push({label:'',url:''});renderContactForm()">➕ Add link</button>
+  </div>
+
+  <div class="fld full" style="margin-top:12px"><label>✉️ Mailing addresses</label>
+    ${c.addresses.map((a,i)=>`<div style="display:flex;gap:7px;margin-bottom:7px">
+      <input id="ad-l-${i}" value="${esc(a.label||'')}" placeholder="Label (e.g. Disputes)" style="flex:2">
+      <textarea id="ad-t-${i}" rows="2" placeholder="Company, P.O. Box…, City, ST ZIP" style="flex:3">${esc(a.text||'')}</textarea>
+      <button class="icon-btn" style="width:34px;height:34px;flex-shrink:0" onclick="syncContactForm();CC.editC.addresses.splice(${i},1);renderContactForm()">✕</button></div>`).join('')}
+    <button class="btn sm" onclick="syncContactForm();CC.editC.addresses.push({label:'',text:''});renderContactForm()">➕ Add address</button>
+  </div>
+
+  <div class="fld full" style="margin-top:12px"><label>📎 Files & screenshots</label>
+    ${c.attachments.map((a,i)=>`<div style="display:flex;gap:9px;align-items:center;padding:6px 0;border-bottom:1px solid var(--hairline);font-size:12.5px">
+      ${attSrc(a)?`<img src="${attSrc(a)}" style="width:38px;height:38px;object-fit:cover;border-radius:8px;border:1px solid var(--hairline)">`:`<span style="font-size:19px">📄</span>`}
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</span>
+      <button style="color:var(--ink-3);padding:4px" onclick="syncContactForm();CC.editC.attachments.splice(${i},1);renderContactForm()">✕</button></div>`).join('')}
+    <label class="btn sm" style="margin-top:8px">📎 Attach files<input type="file" multiple accept="image/*,.pdf,.docx,.txt,.csv,.heic" style="display:none" onchange="contactAttach(this)"></label>
+    <div style="font-size:10.5px;color:var(--ink-3);margin-top:6px">Images under ~400 KB are stored inside the dashboard and viewable anytime; larger files are catalogued by name. Attachments also appear in the File Center.</div>
+  </div>
+
+  <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+  <button class="btn primary" onclick="saveContact()">💾 Save contact</button></div>`);
+}
+function contactAttach(input){
+  syncContactForm();
+  const files = Array.from(input.files||[]);
+  if(!files.length) return;
+  let pending = files.length;
+  files.forEach(f=>{
+    const isImg = /^image\//.test(f.type);
+    const att = { name:f.name, kind:isImg?'Screenshot':'Document', date:todayISO(), note:'', dataUrl:null, _new:true };
+    if(isImg && f.size <= 400*1024){
+      const r = new FileReader();
+      r.onload = ()=>{ att.dataUrl = r.result; CC.editC.attachments.push(att); if(--pending===0) renderContactForm(); };
+      r.onerror = ()=>{ CC.editC.attachments.push(att); if(--pending===0) renderContactForm(); };
+      r.readAsDataURL(f);
+    } else {
+      CC.editC.attachments.push(att);
+      if(--pending===0) renderContactForm();
+    }
+  });
+}
+function saveContact(){
+  syncContactForm();
+  const c = CC.editC;
+  if(!c.name.trim()) { toast('⚠️ Name required','Give the contact a name before saving','warn'); return; }
+  c.links = c.links.filter(l=>(l.url||'').trim());
+  c.addresses = c.addresses.filter(a=>(a.text||'').trim());
+  c.attachments.forEach(a=>{
+    if(a._new){
+      S.files.unshift({ id:uid('f'), emoji:a.dataUrl?'🖼️':'📄', name:a.name, kind:a.kind+' · '+c.name, date:a.date, size:'—', extract:'Attached to contact: '+c.name });
+      delete a._new;
+    }
+  });
+  if(c.id){
+    const idx = S.contacts.findIndex(x=>x.id===c.id);
+    if(idx>-1) S.contacts[idx] = c;
+    addEvent('📇', `<b>Contact updated:</b> ${esc(c.name)}`, 'Note');
+  } else {
+    c.id = uid('c');
+    S.contacts.push(c);
+    addEvent('📇', `<b>Contact added:</b> ${esc(c.name)} (${esc(c.kind)})`, 'Note');
+  }
+  persist('Saved contact '+c.name); closeModal(); render(); toast('📇 Contact saved', c.name, 'good');
+}
+
+/* ---------------- FILES ---------------- */
+function vFiles(){
+  $('#topbar').innerHTML = topbarHTML('📁 File Center', 'Statements, reports, letters — stored and summarized');
+  $('#view').innerHTML = `
+  <div class="dropzone section" id="dz" onclick="document.getElementById('fileinput').click()">
+    <div class="dz-ico">📥</div>
+    <b>Drop files here</b> or tap to browse<br>
+    <span style="font-size:11px">PDF · PNG · JPEG · HEIC · DOCX · TXT · CSV</span>
+    <input type="file" id="fileinput" multiple style="display:none" onchange="handleFiles(this.files)">
+  </div>
+  <div class="card" style="border-left:3px solid var(--accent);margin-bottom:16px">
+    <div style="font-size:12.5px;color:var(--ink-2);line-height:1.6">
+    ⭐ <b>Full document intelligence lives in your Claude chat.</b> Files dropped here are catalogued for reference. For automatic extraction — reading a credit report, pulling balances off a screenshot, parsing a dispute response — send the file to Claude in this conversation and say <i>“update Centauri Credit.”</i> Claude reads it and returns your dashboard with the data filled in.</div>
+  </div>
+  <div class="card"><h3>📚 Document Library (${S.files.length})</h3>
+    ${S.files.map(f=>`<div class="file-row">
+      <div class="file-ico">${f.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <b>${esc(f.name)}</b>
+        <div class="acct-sub">${esc(f.kind)} · ${fmtDate(f.date)} · ${esc(f.size)}</div>
+        ${f.extract?`<div style="font-size:11.5px;color:var(--ink-2);margin-top:3px">🔎 ${esc(f.extract)}</div>`:''}
+      </div>
+      <button style="color:var(--ink-3);padding:6px" onclick="removeFile('${f.id}')">✕</button>
+    </div>`).join('') || '<div class="empty"><div class="e-ico">📭</div>No documents yet</div>'}
+  </div>`;
+  const dz = $('#dz');
+  ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag');}));
+  dz.addEventListener('drop', e=>handleFiles(e.dataTransfer.files));
+}
+function handleFiles(list){
+  Array.from(list).forEach(f=>{
+    const kind = /pdf/i.test(f.name)?'Document':/png|jpe?g|heic/i.test(f.name)?'Screenshot':/csv/i.test(f.name)?'Data':/docx?/i.test(f.name)?'Letter':'File';
+    const emoji = kind==='Screenshot'?'🖼️':kind==='Data'?'📊':kind==='Letter'?'📬':'📄';
+    S.files.unshift({ id:uid('f'), emoji, name:f.name, kind, date:todayISO(), size:(f.size/1024>999? (f.size/1048576).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB'), extract:'Send this file to Claude in chat for extraction → it will return updated dashboard data.' });
+    addEvent('📄', `<b>Document added:</b> ${esc(f.name)}`, 'Document');
+  });
+  persist('Added files'); render();
+  toast('📥 File saved', 'Catalogued in the library. For auto-extraction, share it in your Claude chat.','good');
+}
+function removeFile(id){ S.files = S.files.filter(f=>f.id!==id); persist('Removed file'); render(); }
+</script>
+<script>
+/* ================================================================
+   SCORE SIMULATOR
+   ================================================================ */
+function simEstimate(opts){
+  // Rule-of-thumb FICO deltas. Clearly labeled estimates in UI.
+  const r = revolvers();
+  const curBal = r.reduce((s,a)=>s+a.balance,0), curLim = r.reduce((s,a)=>s+a.limit,0);
+  let bal = Math.max(0, curBal - (opts.pay||0));
+  let lim = curLim + (opts.cli||0);
+  if(opts.newCard) lim += 2000;
+  const curU = curLim? curBal/curLim*100 : 0;
+  const newU = lim? bal/lim*100 : 0;
+  let delta = 0;
+  const uScore = u => u<1?18 : u<10?22 : u<30?12 : u<50?2 : u<75?-8 : -18;
+  delta += uScore(newU) - uScore(curU);
+  if(opts.removeCollection && hasCollections()) delta += 27;
+  if(opts.newCard) delta -= 6;           // inquiry + new account + AAoA hit
+  if(opts.newInquiry) delta -= 4;
+  if(opts.lateFalls) delta += 9;
+  return { delta: Math.round(delta), newU, curU };
+}
+function vSimulator(){
+  $('#topbar').innerHTML = topbarHTML('🧮 Score Simulator', 'Test moves before you make them — instant FICO estimates');
+  const maxPay = revolvers().reduce((s,a)=>s+a.balance,0);
+  $('#view').innerHTML = `
+  <div class="grid section" style="grid-template-columns:5fr 4fr" id="simgrid">
+    <div class="card">
+      <h3>🎛 Scenario Controls</h3>
+      <div class="sim-controls">
+        <div class="sim-row">
+          <label>💰 Pay down card balances <b id="sv-pay">$0</b></label>
+          <input type="range" id="sim-pay" min="0" max="${maxPay}" step="25" value="0" oninput="runSim()">
+        </div>
+        <div class="sim-row">
+          <label>📈 Credit limit increase <b id="sv-cli">$0</b></label>
+          <input type="range" id="sim-cli" min="0" max="10000" step="250" value="0" oninput="runSim()">
+        </div>
+        <label class="sim-toggle"><input type="checkbox" id="sim-coll" onchange="runSim()"> 🗑 A derogatory deleted (AT&T dispute wins / duplicate removed)</label>
+        <label class="sim-toggle"><input type="checkbox" id="sim-card" onchange="runSim()"> 💳 Open a new card (+$2,000 limit, −1 inquiry)</label>
+        <label class="sim-toggle"><input type="checkbox" id="sim-inq" onchange="runSim()"> 🔍 One new hard inquiry (rate shopping)</label>
+        <label class="sim-toggle"><input type="checkbox" id="sim-late" onchange="runSim()"> 🕐 Late payment ages past 24 months</label>
+      </div>
+      <div class="chips" style="margin-top:14px">
+        <button class="chip" onclick="presetSim(1000,0,0,0,0,0)">“What if I pay $1,000?”</button>
+        <button class="chip" onclick="presetSim(${Math.max(0,Math.round(maxPay-0.08*revolvers().reduce((s,a)=>s+a.limit,0)))},0,0,0,0,0)">“Utilization → 8%”</button>
+        <button class="chip" onclick="presetSim(0,0,1,0,0,0)">“AT&T gets deleted”</button>
+        <button class="chip" onclick="presetSim(0,2000,0,0,0,0)">“Get a $2k CLI”</button>
+        <button class="chip" onclick="presetSim(0,0,0,1,0,0)">“Open a new card”</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔮 Estimated Outcome</h3>
+      <div class="sim-result">
+        <div style="font-size:11px;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase">Projected 3-bureau average</div>
+        <div class="snum num" id="sim-score">${avgScore()}</div>
+        <div class="sd" id="sim-delta" style="color:var(--ink-3)">no changes yet</div>
+        <div style="margin:16px 0 6px;font-size:11.5px;color:var(--ink-2);display:flex;justify-content:space-between"><span>Utilization</span><b id="sim-util" class="num">${fmtPct(totalUtil())}</b></div>
+        <div id="sim-utilbar">${utilBar(totalUtil())}</div>
+        <div id="sim-bureaus" style="margin-top:16px;display:grid;gap:8px"></div>
+      </div>
+      <div class="est-note">⚠️ These are directional <b>estimates</b> based on published FICO factor weights — not guarantees. Actual changes depend on your full file and each bureau’s data.</div>
+    </div>
+  </div>`;
+  if(window.innerWidth<=1060) $('#simgrid').style.gridTemplateColumns='1fr';
+  runSim();
+}
+function presetSim(pay,cli,coll,card,inq,late){
+  $('#sim-pay').value = Math.min(pay, +$('#sim-pay').max);
+  $('#sim-cli').value = cli;
+  $('#sim-coll').checked = !!coll; $('#sim-card').checked = !!card;
+  $('#sim-inq').checked = !!inq; $('#sim-late').checked = !!late;
+  runSim();
+}
+function runSim(){
+  const opts = { pay:+$('#sim-pay').value, cli:+$('#sim-cli').value,
+    removeCollection:$('#sim-coll').checked, newCard:$('#sim-card').checked,
+    newInquiry:$('#sim-inq').checked, lateFalls:$('#sim-late').checked };
+  $('#sv-pay').textContent = fmt$(opts.pay);
+  $('#sv-cli').textContent = '+'+fmt$(opts.cli);
+  const est = simEstimate(opts);
+  const proj = clamp(avgScore()+est.delta, 300, 850);
+  $('#sim-score').textContent = proj;
+  const d = $('#sim-delta');
+  d.textContent = est.delta===0? 'no change' : (est.delta>0? `▲ +${est.delta} points (est.)` : `▼ ${est.delta} points (est.)`);
+  d.style.color = est.delta>0? 'var(--good-text)' : est.delta<0? 'var(--crit-text)' : 'var(--ink-3)';
+  $('#sim-util').textContent = fmtPct(est.newU);
+  $('#sim-utilbar').innerHTML = utilBar(est.newU);
+  $('#sim-bureaus').innerHTML = BUREAU_CARDS.map(k=>{
+    const cvar = k==='experian'?'--exp':k==='equifax'?'--equ':'--tu';
+    const p = clamp(S.scores[k].current+est.delta,300,850);
+    return `<div style="display:flex;align-items:center;gap:9px;font-size:12px">
+      <i style="width:8px;height:8px;border-radius:50%;background:var(${cvar});flex-shrink:0"></i>
+      ${BMETA[k].label}<span style="margin-left:auto" class="num">${S.scores[k].current} → <b>${p}</b></span></div>`;
+  }).join('');
+}
+
+/* ================================================================
+   ⭐ CENTAURI AI — rule-based command engine
+   ================================================================ */
+function vAI(){
+  $('#topbar').innerHTML = topbarHTML('⭐ Centauri AI', 'Your FICO expert. Tell it what happened — it updates everything.');
+  $('#view').innerHTML = `
+  <div class="card chat-wrap">
+    <div class="chat-scroll" id="chatscroll">
+      ${S.chat.map(m=>`<div class="msg ${m.who}"><span class="mtag">${m.who==='ai'?'⭐ Centauri AI':'You'}</span>${esc(m.text)}</div>`).join('')}
+    </div>
+    <div class="chips">
+      <button class="chip" onclick="quickAsk('What should I do next?')">What should I do next?</button>
+      <button class="chip" onclick="quickAsk('Explain the Equifax duplicate')">The Equifax duplicate</button>
+      <button class="chip" onclick="quickAsk('How do I remove a collection?')">Remove a collection</button>
+      <button class="chip" onclick="quickAsk('My Equifax score is now 560')">Update my score</button>
+      <button class="chip" onclick="quickAsk('Explain utilization')">Explain utilization</button>
+    </div>
+    <div class="chat-input">
+      <input id="aiinput" placeholder="Try: “I paid Capital One $200” · “remind me to call Experian Friday” · “why did my score drop?”" onkeydown="if(event.key==='Enter')sendAI()">
+      <button class="btn primary" onclick="sendAI()">Send ⭐</button>
+    </div>
+  </div>`;
+  scrollChat();
+}
+function scrollChat(){ const el = $('#chatscroll'); if(el) el.scrollTop = el.scrollHeight; }
+function quickAsk(t){ $('#aiinput').value = t; sendAI(); }
+function sendAI(){
+  const inp = $('#aiinput'); const text = inp.value.trim(); if(!text) return;
+  inp.value='';
+  S.chat.push({who:'me', text});
+  const reply = centauriBrain(text);
+  S.chat.push({who:'ai', text:reply});
+  persist('AI conversation');
+  vAI();
+}
+function findAccount(text){
+  const t = text.toLowerCase();
+  return S.accounts.find(a =>
+    a.name.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w)) ||
+    (a.nickname && a.nickname.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w))));
+}
+function centauriBrain(text){
+  const t = text.toLowerCase();
+  const money = text.match(/\$?\s?([\d,]+(?:\.\d{1,2})?)/);
+  const amt = money? parseFloat(money[1].replace(/,/g,'')) : null;
+
+  /* -- payment logged: "I paid X (amount)" -- */
+  if(/\b(paid|payment|pay(ed)?)\b/.test(t) && !/should|what if|simulate|how/.test(t)){
+    const a = findAccount(t);
+    if(a){
+      const amount = amt!=null && amt<=a.balance+5000? amt : a.balance;
+      const gain = applyPayment(a, amount, false);
+      return `💰 Logged! ${fmt$(amount)} payment to ${a.name}.\n\n→ Balance: ${fmt$(a.balance)}${a.limit?`\n→ Card utilization: ${fmtPct(acctUtil(a))}`:''}\n→ Overall utilization: ${fmtPct(totalUtil())}\n→ Estimated score impact: ${gain} once the new balance reports\n→ Timeline updated · matching task checked off${a.balance===0?'\n\n🎉 PAID OFF — that’s a milestone. Confetti earned.':''}\n\nTip: the balance that matters is the one on your statement date. Pay 3–4 days before it cuts.`;
+    }
+    return `I couldn’t match that to an account. Your open accounts: ${S.accounts.map(a=>a.name).join(' · ')}. Try “I paid Discover $300”.`;
+  }
+
+  /* -- score update: "my experian is 672" -- */
+  if(/(score|experian|equifax|transunion).*\b[3-8]\d{2}\b/.test(t) || /\b[3-8]\d{2}\b.*(experian|equifax|transunion|score)/.test(t)){
+    const num = text.match(/\b([3-8]\d{2})\b/);
+    if(num){
+      const v = +num[1];
+      const key = t.includes('experian')?'experian' : t.includes('equifax')?'equifax' : t.includes('transunion')?'transunion' : null;
+      if(key){
+        const old = S.scores[key].current;
+        S.scores[key].current = v;
+        S.scores[key].history.push(v); S.scores[key].history = S.scores[key].history.slice(-12);
+        S.lastUpdated = todayISO();
+        const d = v-old;
+        addEvent(d>=0?'📈':'📉', `<b>${BMETA[key].label} ${d>=0?'+'+d:d} → ${v}.</b> Reported via Centauri AI.`, 'Score change');
+        persist(`${BMETA[key].label} score → ${v}`);
+        if(d>0 && v>=S.profile.goalScore) { celebrate(); }
+        else if(d>=5) celebrate();
+        return `${d>=0?'📈':'📉'} ${BMETA[key].label} updated: ${old} → ${v} (${d>=0?'+':''}${d}).\n\n→ Score card & trend graph refreshed\n→ Goal progress recalculated (avg now ${avgScore()})\n→ Timeline entry added${d>=5?'\n\n🎉 That’s a real jump — whatever you did last month, keep doing it.':d<0?'\n\nLikely culprits for drops: a higher reported balance, a new inquiry, or a changed account status. Want me to walk through it? Ask “why did my score drop?”':''}`;
+      }
+      return `Got the number (${v}) — which bureau? Try “Equifax is now ${v}”.`;
+    }
+  }
+
+  /* -- reminder / task -- */
+  if(/remind|task|to-?do|don'?t let me forget/.test(t)){
+    const title = text.replace(/^(please\s+)?(remind me to|add (a )?task( to)?|create (a )?task( to)?)\s*/i,'').replace(/\s+(on|by|this|next)\s+\w+$/i,'');
+    S.tasks.unshift({ id:uid('t'), emoji:'🔔', title: title.charAt(0).toUpperCase()+title.slice(1), prio:'med', due:'', impact:'', done:false, note:'Added via Centauri AI' });
+    addEvent('🔔', `<b>Reminder set:</b> ${esc(title)}`, 'Task');
+    persist('AI reminder: '+title);
+    return `🔔 Done — added “${title}” to your Task Center (medium priority).\n\nOpen it to set a due date, or tell me: “make it high priority”.`;
+  }
+
+  /* -- what next / advice -- */
+  if(/what.*(next|should i do|do next)|priorit|advice|plan/.test(t)){
+    const s = suggestions().slice(0,3);
+    return `🧭 Your highest-leverage moves right now, ranked:\n\n` + s.map((x,i)=>`${i+1}. ${x.rank} ${x.title}\n   ${x.impact} · ${x.diff} · ${x.time}`).join('\n\n') + `\n\nThe theme: utilization and the collection are ~80% of your upside. Everything else is maintenance. Want any of these as tasks? Just say “add #1 as a task”.`;
+  }
+  if(/add #?(\d).*task/.test(t)){
+    const n = +t.match(/#?(\d)/)[1];
+    const x = suggestions()[n-1];
+    if(x){ S.tasks.unshift({ id:uid('t'), emoji:'⭐', title:x.title, prio:'high', due:'', impact:x.impact, done:false, note:'From AI plan' });
+      persist('AI task'); return `✅ Added “${x.title}” as a high-priority task. Estimated impact: ${x.impact}.`; }
+  }
+
+  /* -- the Equifax duplicate -- */
+  if(/duplicate|equifax.*(error|twice|double|dispute)|why.*equifax/.test(t)){
+    return `🔵 Why Equifax (540) is 50+ points behind your other bureaus:\n\n1. 💳 DUPLICATE TRADELINE — your Cap One Platinum Secured appears TWICE on Equifax ($497 and $505, both ~100% utilization). One card is being counted as two maxed cards.\n2. 📉 AT&T COLLECTION — Equifax shows it UNPAID ($1,312, reassigned 2/27/26) while Experian shows the same debt PAID/terminated. Bureaus contradicting each other is a classic FCRA §611 dispute.\n\nThe play: file both disputes at equifax.com/personal/disputes (or certified mail). They have 30 days to verify or delete. Attach your Experian report page showing AT&T as paid.\n\nEstimated combined impact: +25–55 points on Equifax alone. This is your single highest-leverage move.`;
+  }
+
+  /* -- why did score drop -- */
+  if(/why.*(drop|fall|down|lower)/.test(t)){
+    return `🔍 Most likely causes for your file, in order:\n\n1. 📊 A statement reporting a higher balance (your Cap One cards swing hardest — small limits move percentages fast)\n2. ❌ Snap-On or Navient re-reporting the charge-off (refreshes the “recent derog” signal monthly)\n3. 📅 Bureau timing — the three don’t update in sync; a “drop” is often one bureau lagging\n4. 🔍 A new inquiry\n\nUpload a fresh score screenshot to Claude in your chat and it can pinpoint exactly which factor moved.`;
+  }
+
+  /* -- collections / charge-offs -- */
+  if(/collection|at ?& ?t|att|snap.?on|navient|pay for delete|charge.?off/.test(t)){
+    return `🗑 Your derogatory playbook, ranked by leverage:\n\n1. 📉 AT&T $1,312 — DISPUTE FIRST (free). Equifax says unpaid, Experian says paid — demand Equifax verify or delete. If verified anyway: written pay-for-delete with Sunrise Credit Service, open at 40% (~$525).\n2. 🔧 Snap-On $4,141 — unpaid CO re-reporting monthly on all 3 bureaus. Written settlement offer (start ~40%) with deletion as an explicit written condition.\n3. 🎓 Navient $10,871 (joint) — biggest dollar, slowest win. Charged-off private loans often settle 40–60%. Get any agreement in writing before paying $1.\n4. 💌 Current + Grow Credit — already PAID: send goodwill-deletion letters. Easiest wins on the board.\n\nGolden rules: nothing by phone, everything certified mail, never re-acknowledge old debt casually (it can reset clocks in some states). FICO 8 counts even paid collections — deletion is always the goal.`;
+  }
+
+  /* -- utilization explainer -- */
+  if(/utilization|util/.test(t)){
+    const r = revolvers().map(a=>`• ${a.emoji} ${a.name}: ${fmt$(a.balance)} / ${fmt$(a.limit)} = ${fmtPct(acctUtil(a))}`).join('\n');
+    return `📊 Utilization = STATEMENT balance ÷ limit. It’s 30% of your FICO and has no memory — fix it one month, it scores clean the next.\n\nYour live balances:\n${r}\n\nOverall: ${fmtPct(totalUtil())} 🎉\n\nBUT — the bureaus still see your June statements: $173/$200 (87%) and $497–505/$500 (~100%). That’s what’s scored until the July statements cut. You already did the fix; now protect it — don’t add spending before the statement dates. Targets: under 10% great, 1–9% on one card + $0 on the rest (“AZEO”) is optimal.`;
+  }
+
+  /* -- simulate -- */
+  if(/what if|simulate|would happen/.test(t)){
+    if(amt && /pay/.test(t)){
+      const est = simEstimate({pay:amt});
+      return `🔮 Paying ${fmt$(amt)} toward your cards:\n\n→ Utilization: ${fmtPct(est.curU)} → ${fmtPct(est.newU)}\n→ Estimated score change: ${est.delta>=0?'+':''}${est.delta} points\n→ Projected average: ${clamp(avgScore()+est.delta,300,850)}\n\n(Estimate, not a guarantee.) Open the 🧮 Simulator to fine-tune the scenario.`;
+    }
+    return `🧮 Head to the Simulator tab — sliders for paydowns and CLIs, toggles for collection removal, new cards, and inquiries, with live bureau-by-bureau projections. Or ask me directly: “what if I pay $800?”`;
+  }
+
+  /* -- goodwill / dispute / AU / general knowledge -- */
+  if(/goodwill/.test(t)) return `💌 Goodwill letters — your two best candidates are PAID charge-offs:\n\n• Current (paid $0, CO late 2025) — cite that it’s fully paid and ask for a one-time courtesy deletion\n• Grow Credit (paid — the whole history was $38!) — tiny paid debts are the easiest deletions in the business\n\nAlso worth one for the Cap One late streak (Oct–Dec 2025) once you have 6+ clean months — you hit that in August. Keep it short: take responsibility, show the clean streak, ask a human for a courtesy adjustment. Success ≈ 20–30%, cost $0. Follow up in 30 days.`;
+  if(/authorized user|\bau\b/.test(t)) return `👥 Authorized User strategy: your Chase (JPMCB) AU card ran perfect 2019–2024 with a $6,400 limit — it closed Dec 2024 but keeps aging your file for years. If that cardholder (or any family member with an old, clean, low-utilization card) re-adds you to an OPEN card, you inherit its age, limit, and history again — one of the few instant legit boosts. Rules: perfect history only, utilization under 10%, and confirm the bank reports AUs to all three bureaus.`;
+  if(/inquir/.test(t)) return `🔍 Your inquiry situation: ~15 hard pulls, nearly all from Dec 2025 auto shopping (Westlake, Ally, Exeter, Gary Yeomans Honda…). Good news: FICO scores an auto-shopping window as ONE inquiry, and inquiries stop being scored after 12 months — the whole cluster stops counting around Dec 2026 and falls off the report entirely Dec 2027. The Jan 2026 Nowcom pull scores until Jan 2027.\n\nRule until 2027: zero new applications. Soft pulls (your own score checks, Cap One CLI requests) never hurt.`;
+  if(/cli|limit increase|graduat/.test(t)) return `📈 Capital One strategy (soft pull, free points):\n\n• Platinum Secured …1473 — ask about GRADUATION to unsecured in August (6 clean months since Feb). Deposit back, usually a limit bump.\n• Quicksilver …5098 — request a CLI at the same time. A $200 limit makes every coffee a utilization spike; even $200→$500 is huge percentage-wise.\n\nBest timing: right after a statement reports a low balance. Both asks are soft pulls at Cap One — zero risk.`;
+  if(/mortgage/.test(t)) return `🏠 Mortgage lenders pull FICO 2/4/5 and take the MIDDLE score. Yours today: EXP 526 · EQU 511 · TU 619 → mid-score 526. FHA floor is 580; most conventional wants 620+.\n\nThese older models punish unpaid collections harder than FICO 8 — so the AT&T / Snap-On / Navient work moves your mortgage scores fastest. Roadmap: disputes + settlements → 24 clean months → utilization under 10% → 620+ mid-score is realistic by 2028. Your Goals tab tracks it.`;
+  if(/auto|car loan|vehicle|tesla/.test(t)) return `🚗 Your hidden strength: FICO Auto 5/4/2 on TransUnion is ALREADY 640 — fair-rate territory, and plenty of auto lenders pull exactly that score. (Auto 8: EQU 541 / TU 597 / EXP 589.)\n\nPlay: 1) win the Equifax disputes so no lender sees the 5-teens, 2) hold utilization under 10%, 3) when you shop again, keep ALL applications inside a 14-day window so they score as one inquiry — unlike Dec 2025, when the file collected ~13 pulls over 3 weeks. A credit-union pre-approval (Alliant already pulled your TU) beats dealer-desk shotgunning.`;
+  if(/freeze|identity|theft|fraud|alert/.test(t)) return `🧊 Your initial fraud alert runs until May 20, 2027 — and here’s the removal playbook you saved. Removal must be requested at EACH bureau separately (placement was shared; removal isn’t):\n\n🔵 EQUIFAX — fastest: myEquifax account → manage alerts. By mail: Equifax Information Services LLC, P.O. Box 105069, Atlanta, GA 30348-5069 — written request + copy of government ID + proof of address (utility bill or bank statement).\n\n🟢 EXPERIAN — Fraud Alert Center at experian.com, or 1-888-397-3742, or mail: Experian, P.O. Box 9554, Allen, TX 75013 — include name, SSN, DOB, addresses for 2 years, ID + utility bill.\n\n🟣 TRANSUNION — TransUnion Service Center online, or 1-800-916-8800, or mail: TransUnion Fraud Victim Assistance, P.O. Box 2000, Chester, PA 19016.\n\n⚠️ Heads up: the alert makes lenders verify your identity but does NOT hurt your score. Only remove it if it’s blocking something you need (instant approvals, CLI requests). All three are queued as tasks due Jul 24.`;
+  if(/fico (8|9|10)|score model|vantage/.test(t)) return `🧠 Model cheat sheet:\n\n• FICO 8 — what most card issuers use. Paid collections still hurt; small collections (<$100) ignored.\n• FICO 9 — kinder: paid collections ignored, medical debt weighted less.\n• FICO 10/10T — trended data: 24 months of balance *patterns*, so paying-over-time vs. carrying matters.\n• Auto 8/9 — auto-history weighted. Mortgage: FICO 2/4/5.\n• VantageScore (Credit Karma) — NOT what most lenders use; treat it as a directional signal only.\n\nThe good news: utilization + on-time payments move ALL of them.`;
+  if(/hello|hi\b|hey/.test(t)) return `👋 Hey ${S.profile.name}! I track everything on this dashboard. Tell me things like:\n\n💰 “I paid Discover $500” — logs it everywhere\n📈 “TransUnion is now 670” — updates cards & graphs\n🔔 “Remind me to call Midland Tuesday”\n🧭 “What should I do next?”\n🔮 “What if I pay $1,000?”\n\nWhat’s happening with your credit today?`;
+  if(/thank/.test(t)) return `🙌 Anytime. Current standing: avg ${avgScore()}, utilization ${fmtPct(totalUtil())}, ${S.tasks.filter(x=>!x.done).length} open tasks. You’re ${Math.max(0,S.profile.goalScore-avgScore())} points from your ${S.profile.goalScore} goal — keep stacking wins. 🚀`;
+
+  /* -- fallback -- */
+  return `⭐ I track your dashboard and know FICO inside-out. I understood: “${text}”\n\nI can act on:\n💰 Payments — “I paid Capital One $200”\n📈 Score updates — “Experian is 675 now”\n🔔 Reminders — “remind me to call Equifax”\n🧭 Strategy — “what should I do next?”\n🔮 Scenarios — “what if I pay $1,000?”\n📚 Any credit topic — disputes, goodwill, AUs, CLIs, mortgage scores, FICO models…\n\nFor deep analysis of documents & screenshots, share them with Claude in your chat and say “update Centauri Credit”.`;
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+document.documentElement.dataset.theme = (S.settings && S.settings.theme) || 'dark';
+render();
+</script>
+<script type="module">
+/* ================================================================
+   ☁️ CENTAURI CLOUD — Firebase Firestore real-time sync
+   Collections prefix: cc_  ·  data lives at cc_spaces/{syncCode}
+   The sync code is a private random key — treat the sync link
+   like a password. No accounts, no login, per Centauri Cloud spec.
+   ================================================================ */
+(function(){
+  const el = document.getElementById('syncstatus');
+  window.SYNC_STATE = 'connecting';
+})();
+function setSyncState(st, msg){
+  window.SYNC_STATE = st;
+  const el = document.getElementById('syncstatus');
+  if(el){
+    const map = { connecting:['#898781','connecting…'], synced:['#0ca30c','synced'], error:['#d03b3b','sync error'], offline:['#898781','offline — saved on this device'] };
+    const [c,t] = map[st]||map.connecting;
+    el.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:6px;vertical-align:0"></span>☁️ ${msg||t}`;
+  }
+}
+window.setSyncState = setSyncState;
+
+try{
+  /* ---- sync code (capability key) ---- */
+  const params = new URLSearchParams(location.search);
+  let code = params.get('sync');
+  if(code){ try{ localStorage.setItem('cc-sync-code', code); }catch(e){} }
+  else { try{ code = localStorage.getItem('cc-sync-code'); }catch(e){} }
+  if(!code){
+    code = Array.from(crypto.getRandomValues(new Uint8Array(15))).map(b=>'abcdefghjkmnpqrstuvwxyz23456789'[b%31]).join('');
+    try{ localStorage.setItem('cc-sync-code', code); }catch(e){}
+  }
+  window.CC_SYNC_CODE = code;
+
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+  const { getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp } =
+    await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBs8jZeW96DsumVVpK1mANVDvg6-LqUILg",
+    authDomain: "todo-107e0.firebaseapp.com",
+    projectId: "todo-107e0",
+    storageBucket: "todo-107e0.firebasestorage.app",
+    messagingSenderId: "1001442592988",
+    appId: "1:1001442592988:web:1c73371e2a069b4bbd8c19"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const CLIENT = Math.random().toString(36).slice(2);
+  const stateRef = doc(db, 'cc_spaces', code);
+  const blobsCol = collection(db, 'cc_spaces', code, 'blobs');
+  window.BLOBS = window.BLOBS || {};
+  const uploadedBlobs = new Set();
+  let seeded = false;
+
+  /* ---- push local state → cloud (debounced via persist()) ---- */
+  async function pushNow(){
+    try{
+      const s = JSON.parse(JSON.stringify(S));
+      delete s._rev;
+      /* externalize large screenshots into blob docs (1MB doc limit) */
+      for(let i=0;i<(s.contacts||[]).length;i++){
+        const atts = s.contacts[i].attachments||[];
+        for(let j=0;j<atts.length;j++){
+          const a = atts[j];
+          if(a.dataUrl && a.dataUrl.length > 2000){
+            if(!a.blobId) a.blobId = 'b'+Math.random().toString(36).slice(2,12);
+            const live = (S.contacts[i]&&S.contacts[i].attachments[j]);
+            if(live) live.blobId = a.blobId;
+            window.BLOBS[a.blobId] = a.dataUrl;
+            if(!uploadedBlobs.has(a.blobId)){
+              await setDoc(doc(blobsCol, a.blobId), { data: a.dataUrl, name: a.name||'', createdAt: serverTimestamp() });
+              uploadedBlobs.add(a.blobId);
+            }
+            delete a.dataUrl;
+          }
+        }
+      }
+      S._rev = (S._rev||0)+1;
+      await setDoc(stateRef, { state: JSON.stringify(s), rev: S._rev, writer: CLIENT, updatedAt: serverTimestamp() });
+      setSyncState('synced');
+    }catch(e){
+      setSyncState('error');
+      if(typeof toast==='function') toast('⚠️ Cloud sync failed', e.message||'Will retry on next change', 'warn');
+    }
+  }
+  let pushTimer = null;
+  window.CloudPush = function(){ clearTimeout(pushTimer); pushTimer = setTimeout(pushNow, 900); };
+
+  /* ---- cloud → local (the snapshots ARE the state) ---- */
+  onSnapshot(stateRef, snap => {
+    if(!snap.exists()){
+      if(!seeded){ seeded = true; pushNow(); }  /* first-run seeding */
+      return;
+    }
+    setSyncState('synced');
+    const d = snap.data();
+    if(d.writer === CLIENT) return;                 /* our own write echoed back */
+    if((d.rev||0) <= (S._rev||0)) return;           /* stale */
+    try{
+      const incoming = JSON.parse(d.state);
+      incoming._rev = d.rev;
+      S = incoming;
+      Store.save(S);
+      if(document.querySelector('.modal-veil')) window._pendingRender = true;
+      else render();
+      const stamp = document.getElementById('savestamp');
+      if(stamp) stamp.textContent = '☁️ Updated from cloud ' + fmtTime(new Date());
+    }catch(e){ console.warn('sync apply failed', e); }
+  }, err => {
+    setSyncState('error');
+    if(typeof toast==='function') toast('⚠️ Sync error', err.message, 'warn');
+  });
+
+  onSnapshot(blobsCol, qs => {
+    let changed = false;
+    qs.forEach(d => { if(!window.BLOBS[d.id]){ window.BLOBS[d.id] = d.data().data; changed = true; uploadedBlobs.add(d.id); } });
+    if(changed && CC.view==='contacts' && !document.querySelector('.modal-veil')) render();
+  }, ()=>{});
+
+  setSyncState('connecting');
+
+  /* ---- PWA service worker (only when hosted) ---- */
+  if('serviceWorker' in navigator && location.protocol === 'https:'){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+}catch(e){
+  /* offline / file:// / blocked network — app runs fully local */
+  setSyncState('offline');
+  window.CC_SYNC_CODE = window.CC_SYNC_CODE || (function(){ try{ return localStorage.getItem('cc-sync-code'); }catch(_){ return null; } })();
+}
+</script>
+</body>
+</html>
