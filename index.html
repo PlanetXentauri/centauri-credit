@@ -2146,23 +2146,110 @@ function vAI(){
       <button class="chip" onclick="quickAsk('My Equifax score is now 560')">Update my score</button>
       <button class="chip" onclick="quickAsk('Explain utilization')">Explain utilization</button>
     </div>
+    <div id="aipending" style="padding:2px 2px 0"></div>
     <div class="chat-input">
-      <input id="aiinput" placeholder="Try: “I paid Capital One $200” · “remind me to call Experian Friday” · “why did my score drop?”" onkeydown="if(event.key==='Enter')sendAI()">
+      <label class="btn" style="flex-shrink:0;cursor:pointer;padding:9px 13px" title="Attach a file (screenshot, report, letter…)">📎<input type="file" id="aifile" accept="image/*,.pdf,.docx,.txt,.csv,.heic" style="display:none" onchange="aiFileSelected(this)"></label>
+      <input id="aiinput" placeholder="Attach a file + say what it is, or: “I paid Capital One $200” · “Equifax is now 560” · “shipped the dispute”" onkeydown="if(event.key==='Enter')sendAI()">
       <button class="btn primary" onclick="sendAI()">Send ⭐</button>
     </div>
   </div>`;
+  renderAIPending();
   scrollChat();
 }
 function scrollChat(){ const el = $('#chatscroll'); if(el) el.scrollTop = el.scrollHeight; }
 function quickAsk(t){ $('#aiinput').value = t; sendAI(); }
 function sendAI(){
-  const inp = $('#aiinput'); const text = inp.value.trim(); if(!text) return;
+  const inp = $('#aiinput'); const text = inp.value.trim();
+  const pf = window._aiPendingFile;
+  if(!text && !pf) return;
   inp.value='';
-  S.chat.push({who:'me', text});
-  const reply = centauriBrain(text);
+  S.chat.push({who:'me', text: (pf?`📎 ${pf.name}\n`:'') + text});
+  let reply;
+  if(pf){ reply = intakeFile(pf, text); window._aiPendingFile = null; }
+  else { reply = centauriBrain(text); }
   S.chat.push({who:'ai', text:reply});
   persist('AI conversation');
   vAI();
+}
+
+/* ---- file intake: attach in chat, tell it what it is → it files & connects ---- */
+function aiFileSelected(input){
+  const f = input.files && input.files[0];
+  if(!f) return;
+  const isImg = /^image\//.test(f.type);
+  const kind = isImg?'Screenshot' : /pdf/i.test(f.name)?'Document' : /csv|xlsx?/i.test(f.name)?'Data' : /docx?/i.test(f.name)?'Letter' : 'File';
+  const done = (dataUrl)=>{ window._aiPendingFile = { name:f.name, kind, dataUrl:dataUrl||null, isImage:isImg }; renderAIPending(); };
+  if(isImg && f.size <= 700*1024){ const r=new FileReader(); r.onload=()=>done(r.result); r.onerror=()=>done(null); r.readAsDataURL(f); }
+  else done(null);
+  input.value = '';
+}
+function renderAIPending(){
+  const el = document.getElementById('aipending'); if(!el) return;
+  const f = window._aiPendingFile;
+  el.innerHTML = f
+    ? `<span class="chip" style="background:var(--glass-raise)">📎 ${esc(f.name)} <b style="cursor:pointer;margin-left:4px" onclick="window._aiPendingFile=null;renderAIPending()">✕</b></span> <span style="font-size:11px;color:var(--ink-3)">— tell me what it is / what you did, and I’ll file it and update your profile</span>`
+    : '';
+}
+/* score-match the dispute the message is about (entity-specific, not generic) */
+function matchDispute(text){
+  const t = (text||'').toLowerCase();
+  const STOP = new Set(['equifax','experian','transunion','dispute','collection','tradeline','letter','services','information','mobility']);
+  let best=null, bestScore=0;
+  (S.mail||[]).forEach(m=>{
+    let score=0;
+    if(/at\s*&?\s*t|\batt\b/.test(t) && /at\s*&?\s*t/i.test(m.title)) score+=3;
+    if(/capital|cap\s*one|quicksilver|platinum|duplicate/.test(t) && /capital|duplicate/i.test(m.title)) score+=3;
+    m.title.toLowerCase().split(/[^a-z0-9&]+/).forEach(w=>{ if(w.length>3 && !STOP.has(w) && t.includes(w)) score+=1; });
+    if(score>bestScore){ bestScore=score; best=m; }
+  });
+  return bestScore>0 ? best : null;
+}
+function intakeFile(pf, text){
+  const t = (text||'').toLowerCase();
+  const att = { name:pf.name, kind:pf.kind, date:todayISO(), note: text||'Uploaded via Centauri AI', dataUrl: pf.dataUrl||null };
+
+  /* 1) always save to File Center (viewable if it's an image) */
+  S.files.unshift({ id:uid('f'), emoji: pf.isImage?'🖼️':pf.kind==='Document'?'📄':pf.kind==='Letter'?'📬':pf.kind==='Data'?'📊':'📄',
+    name:pf.name, kind: pf.kind + (text?(' · '+text.slice(0,44)):''), date:todayISO(), size:'—',
+    dataUrl: pf.dataUrl||null, extract: text||'Uploaded via Centauri AI' });
+
+  /* 2) connect it to the right thing, based on what you said */
+  const linked = [], did = [];
+  const mail = matchDispute(t);
+  const contact = (S.contacts||[]).find(c=> c.name.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w)));
+  const acc = findAccount(t);
+
+  if(mail){
+    mail.attachments = mail.attachments||[]; mail.attachments.push(att); mail.lastChecked = todayISO();
+    linked.push(`the ${mail.title.replace(/^Equifax — /,'')}`);
+    /* act on dispute status straight from your words */
+    const tnum = text && text.match(/\b(9[24]\d{2}[\s\d]{12,26}\d)\b/);
+    if(tnum){ mail.tracking = tnum[1].replace(/\s+/g,' ').trim(); did.push(`saved tracking ${mail.tracking}`); }
+    if(/deliver/.test(t)){ mail.status='delivered'; mail.deliveredDate=todayISO(); did.push(`marked it delivered — Equifax now has until ${fmtDate(responseDue(mail))} to respond`); }
+    else if(/response|result|answer|reply|hear.?back/.test(t) && mail.status!=='prepared'){ mail.status='responded'; did.push('marked their response received'); }
+    else if(/ship|mail|sent|dropped|drop.?off|certified|receipt/.test(t) && mail.status==='prepared'){ mail.status='shipped'; mail.shipDate=mail.shipDate||todayISO(); did.push('moved it to Shipped'); }
+  } else if(contact){
+    contact.attachments = contact.attachments||[]; contact.attachments.push(att); linked.push(`your ${contact.name} contact`);
+  }
+  if(acc){ acc.notes = (acc.notes?acc.notes+' ':'') + `📎 ${pf.name}${text?': '+text:''} (${fmtDate(todayISO())}).`; linked.push(acc.name); }
+
+  /* 3) timeline */
+  addEvent('📄', `<b>Uploaded:</b> ${esc(pf.name)}${text?` — ${esc(text)}`:''}${linked.length?` <span style="color:var(--ink-3)">(linked to ${esc(linked.join(' & '))})</span>`:''}`, 'Document');
+
+  /* 4) non-dispute intents (payment / score / reminder) → main brain */
+  let brain='';
+  if(!mail && text && /paid|payment|\bscore\b|now\s+\d{3}|is\s+\d{3}|remind|add.*task/.test(t)){ brain = centauriBrain(text); }
+
+  persist('AI file intake');
+
+  /* 5) confirm */
+  let head = `📎 Filed “${pf.name}” in your File Center${pf.isImage?' — tap it there to view':''}.`;
+  if(linked.length) head += `\n🔗 Connected it to ${linked.join(' & ')}.`;
+  if(did.length) head += `\n✅ ${did.join('; ')}.`;
+  head += `\n🕐 Logged to your timeline.`;
+  if(brain) return head + `\n\n— — —\n` + brain;
+  if(!linked.length) return head + `\n\nI couldn’t tell what this connects to yet — tell me and I’ll link it, e.g. “this is the AT&T dispute receipt, tracking 9407…”, “Discover statement”, or “new Experian score, it’s 605”.`;
+  return head + `\n\nAnything else? I can log a payment, update a score, mark delivered, or add a task — just tell me.`;
 }
 function findAccount(text){
   const t = text.toLowerCase();
@@ -2299,7 +2386,7 @@ render();
    AUTO-UPDATER — propagate any new deploy to every device
    Bump APP_BUILD on each deploy; online devices refresh themselves.
    ================================================================ */
-window.APP_BUILD = "b9-20260719";
+window.APP_BUILD = "b10-20260719";
 (function(){
   var CHECK_MS = 150000; // ~2.5 min
   function build(){ return window.APP_BUILD || ''; }
