@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Centauri Credit — FICO Command Center</title>
-<meta name="theme-color" content="#0b0d12">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" type="image/png" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Centauri Credit">
 <style>
 /* ============ CENTAURI CREDIT — DESIGN TOKENS ============ */
 :root, :root[data-theme="dark"]{
@@ -93,7 +85,7 @@ a{color:var(--accent)}
 .nav-btn .ico{width:22px;text-align:center;font-size:15px}
 .nav-spacer{flex:1}
 .sidebar-foot{font-size:10.5px;color:var(--ink-3);padding:10px 12px;line-height:1.5}
-.main{flex:1;min-width:0;padding:calc(22px + env(safe-area-inset-top)) clamp(14px,3vw,34px) 96px}
+.main{flex:1;min-width:0;padding:22px clamp(14px,3vw,34px) 96px}
 .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .topbar h1{font-size:clamp(19px,2.4vw,25px)}
 .topbar .sub{color:var(--ink-3);font-size:12.5px;margin-top:2px}
@@ -580,13 +572,9 @@ function persist(snapshotLabel){
     S.history = S.history.slice(0,25);
   }
   Store.save(S);
-  if(window.CloudPush) window.CloudPush();
   const el = document.getElementById('savestamp');
   if(el) el.textContent = '☁️ Saved ' + fmtTime(new Date());
 }
-
-/* attachment source resolver — inline dataUrl or cloud blob */
-function attSrc(a){ return (a && (a.dataUrl || (a.blobId && window.BLOBS && window.BLOBS[a.blobId]))) || null; }
 
 /* ---------- helpers ---------- */
 const $ = sel => document.querySelector(sel);
@@ -864,10 +852,9 @@ function renderNav(){
     ${NAV.map(n=>`<button class="nav-btn ${CC.view===n.id?'active':''}" onclick="go('${n.id}')"><span class="ico">${n.ico}</span>${n.label}</button>`).join('')}
     <div class="nav-spacer"></div>
     <div class="sidebar-foot" id="savestamp-wrap">
-      <div id="syncstatus"></div>
-      <div id="savestamp" style="margin-top:4px">Auto-save on</div>
+      <div id="savestamp">☁️ Auto-save on</div>
+      <div style="margin-top:4px">${Store.ok?'Data stored in this browser':'Session storage mode'}</div>
     </div>`;
-  if(window.setSyncState) setSyncState(window.SYNC_STATE||'connecting');
   $('#bottomnav').innerHTML = NAV.map(n=>
     `<button class="bn-btn ${CC.view===n.id?'active':''}" onclick="go('${n.id}')"><span class="ico">${n.ico}</span>${n.label.split(' ')[0]}</button>`
   ).join('');
@@ -920,56 +907,16 @@ function celebrate(){
 function openModal(html){
   $('#modal-root').innerHTML = `<div class="modal-veil" onclick="if(event.target===this)closeModal()"><div class="modal pop">${html}</div></div>`;
 }
-function closeModal(){
-  $('#modal-root').innerHTML='';
-  if(window._pendingRender){ window._pendingRender = false; render(); }
-}
+function closeModal(){ $('#modal-root').innerHTML=''; }
 
-/* data export / import / reset / cloud sync */
-const LIVE_URL = 'https://planetxentauri.github.io/centauri-credit/';
-function syncLink(){ return window.CC_SYNC_CODE ? LIVE_URL + '?sync=' + window.CC_SYNC_CODE : LIVE_URL; }
-function copySyncLink(){
-  const link = syncLink();
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(link).then(()=>toast('🔗 Sync link copied','Open it on any device to connect it to this data','good'))
-      .catch(()=>prompt('Copy your sync link:', link));
-  } else prompt('Copy your sync link:', link);
-}
-function joinSync(){
-  const v = ($('#joincode')&&$('#joincode').value.trim())||'';
-  if(!v) return;
-  const code = v.includes('sync=') ? v.split('sync=')[1].split('&')[0] : v;
-  try{ localStorage.setItem('cc-sync-code', code); localStorage.removeItem('centauri-credit'); }catch(e){}
-  toast('☁️ Joining sync space…','Reloading with the shared data');
-  setTimeout(()=>{ location.href = location.pathname + '?sync=' + encodeURIComponent(code); }, 700);
-}
+/* data export / import / reset */
 function openDataModal(){
-  const st = window.SYNC_STATE||'offline';
-  const cloudOn = st==='synced'||st==='connecting';
   openModal(`<h2>☁️ Data & Sync <span class="x" onclick="closeModal()">✕</span></h2>
-
-  <div style="background:var(--glass-2);border:1px solid var(--hairline);border-radius:14px;padding:14px;margin-bottom:14px">
-    <div style="font-size:12px;font-weight:650;margin-bottom:6px">${cloudOn?'🟢 Centauri Cloud: live sync '+(st==='synced'?'active':'connecting…'):'⚪ Centauri Cloud: not connected here'}</div>
-    <div style="font-size:11.5px;color:var(--ink-2);line-height:1.6">
-      ${cloudOn
-        ? 'Every change syncs in real time to every device signed into your sync space. Your data lives under a private random key — the link below <b>is the key</b>, so only share it with your own devices.'
-        : 'Cloud sync runs on the hosted app. Open <b>'+LIVE_URL.replace('https://','')+'</b> and your data syncs across all devices in real time. This copy still auto-saves locally.'}
-    </div>
-    ${window.CC_SYNC_CODE?`<div style="font-size:11px;color:var(--ink-3);margin-top:9px">Sync code: <code style="background:var(--glass-raise);padding:2px 7px;border-radius:6px;user-select:all">${esc(window.CC_SYNC_CODE)}</code></div>`:''}
-    <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">
-      <button class="btn sm primary" onclick="copySyncLink()">🔗 Copy sync link for other devices</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:9px">
-      <input id="joincode" placeholder="Paste a sync code or link from another device" style="flex:1;font-size:12px">
-      <button class="btn sm" onclick="joinSync()">Join</button>
-    </div>
-  </div>
-
-  <p style="font-size:12px;color:var(--ink-2);line-height:1.6">Backups & Claude updates: export the data file and share it in your Claude chat with new screenshots or reports — Claude reads them and returns updated data.</p>
-  <div style="display:grid;gap:9px;margin-top:12px">
-    <button class="btn" onclick="exportData()">⬇️ Export data file (JSON)</button>
+  <p style="font-size:12.5px;color:var(--ink-2);line-height:1.6">Every change auto-saves to this browser instantly${Store.ok?'':' (this preview keeps data for the session)'}. To sync to another device — or to have Claude update your data from new screenshots and reports — export the data file and share it in your Claude chat.</p>
+  <div style="display:grid;gap:9px;margin-top:15px">
+    <button class="btn primary" onclick="exportData()">⬇️ Export data file (JSON)</button>
     <label class="btn" style="justify-content:center">⬆️ Import data file<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
-    <button class="btn danger" onclick="if(confirm('Reset everything to the imported credit-report dataset?')){S=defaultState();persist('Reset to baseline');closeModal();render();toast('🔄 Reset complete','Baseline data restored');}">♻️ Reset to report baseline</button>
+    <button class="btn danger" onclick="if(confirm('Reset everything to the sample dataset?')){S=defaultState();persist('Reset to sample');closeModal();render();toast('🔄 Reset complete','Sample data restored');}">♻️ Reset to sample data</button>
   </div>
   ${S.history.length?`<div style="margin-top:16px"><div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Version history</div>
     ${S.history.slice(0,8).map(h=>`<div style="font-size:11.5px;color:var(--ink-2);padding:4px 0;border-bottom:1px solid var(--hairline)">🕐 ${new Date(h.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})} — ${esc(h.label)}</div>`).join('')}</div>`:''}`);
@@ -1488,7 +1435,7 @@ function contactCardHTML(c){
       <div class="crow"><span class="ci">📅</span>Last: ${fmtDate(c.last)} ${c.next?`· <b style="color:var(--warn)">Next: ${fmtDate(c.next)}</b>`:''}</div>
       ${c.notes?`<div class="crow" style="align-items:flex-start"><span class="ci">📝</span><span style="line-height:1.5">${esc(c.notes)}</span></div>`:''}
       ${atts.length?`<div class="crow" style="align-items:flex-start;flex-wrap:wrap;gap:6px"><span class="ci">📎</span>
-        ${atts.map((a,i)=>`<button class="chip" style="font-size:10px" onclick="openAttachment('${c.id}',${i})">${attSrc(a)?'🖼️':'📄'} ${esc(a.name.length>26? a.name.slice(0,24)+'…':a.name)}</button>`).join('')}</div>`:''}
+        ${atts.map((a,i)=>`<button class="chip" style="font-size:10px" onclick="openAttachment('${c.id}',${i})">${a.dataUrl?'🖼️':'📄'} ${esc(a.name.length>26? a.name.slice(0,24)+'…':a.name)}</button>`).join('')}</div>`:''}
     </div>
     <div style="display:flex;gap:8px;margin-top:13px;flex-wrap:wrap">
       <button class="btn sm" onclick="logCall('${c.id}')">📞 Log call</button>
@@ -1502,7 +1449,7 @@ function openAttachment(cid, idx){
   const a = (c.attachments||[])[idx]; if(!a) return;
   openModal(`<h2>📎 ${esc(a.name)} <span class="x" onclick="closeModal()">✕</span></h2>
     <div style="font-size:12px;color:var(--ink-3);margin-bottom:11px">${esc(a.kind||'File')} · added ${fmtDate(a.date)}${a.note?` · ${esc(a.note)}`:''}</div>
-    ${attSrc(a)? `<img src="${attSrc(a)}" style="max-width:100%;border-radius:12px;border:1px solid var(--hairline)">`
+    ${a.dataUrl? `<img src="${a.dataUrl}" style="max-width:100%;border-radius:12px;border:1px solid var(--hairline)">`
       : `<div class="empty"><div class="e-ico">📄</div>Stored as a reference. To re-extract its contents, share the original file with Claude in your chat.</div>`}
     <div class="modal-foot">
       <button class="btn danger sm" onclick="removeContactAtt('${cid}',${idx})">🗑 Remove</button>
@@ -1577,7 +1524,7 @@ function renderContactForm(){
 
   <div class="fld full" style="margin-top:12px"><label>📎 Files & screenshots</label>
     ${c.attachments.map((a,i)=>`<div style="display:flex;gap:9px;align-items:center;padding:6px 0;border-bottom:1px solid var(--hairline);font-size:12.5px">
-      ${attSrc(a)?`<img src="${attSrc(a)}" style="width:38px;height:38px;object-fit:cover;border-radius:8px;border:1px solid var(--hairline)">`:`<span style="font-size:19px">📄</span>`}
+      ${a.dataUrl?`<img src="${a.dataUrl}" style="width:38px;height:38px;object-fit:cover;border-radius:8px;border:1px solid var(--hairline)">`:`<span style="font-size:19px">📄</span>`}
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</span>
       <button style="color:var(--ink-3);padding:4px" onclick="syncContactForm();CC.editC.attachments.splice(${i},1);renderContactForm()">✕</button></div>`).join('')}
     <label class="btn sm" style="margin-top:8px">📎 Attach files<input type="file" multiple accept="image/*,.pdf,.docx,.txt,.csv,.heic" style="display:none" onchange="contactAttach(this)"></label>
@@ -1920,138 +1867,6 @@ function centauriBrain(text){
    ================================================================ */
 document.documentElement.dataset.theme = (S.settings && S.settings.theme) || 'dark';
 render();
-</script>
-<script type="module">
-/* ================================================================
-   ☁️ CENTAURI CLOUD — Firebase Firestore real-time sync
-   Collections prefix: cc_  ·  data lives at cc_spaces/{syncCode}
-   The sync code is a private random key — treat the sync link
-   like a password. No accounts, no login, per Centauri Cloud spec.
-   ================================================================ */
-(function(){
-  const el = document.getElementById('syncstatus');
-  window.SYNC_STATE = 'connecting';
-})();
-function setSyncState(st, msg){
-  window.SYNC_STATE = st;
-  const el = document.getElementById('syncstatus');
-  if(el){
-    const map = { connecting:['#898781','connecting…'], synced:['#0ca30c','synced'], error:['#d03b3b','sync error'], offline:['#898781','offline — saved on this device'] };
-    const [c,t] = map[st]||map.connecting;
-    el.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c};margin-right:6px;vertical-align:0"></span>☁️ ${msg||t}`;
-  }
-}
-window.setSyncState = setSyncState;
-
-try{
-  /* ---- sync code (capability key) ---- */
-  const params = new URLSearchParams(location.search);
-  let code = params.get('sync');
-  if(code){ try{ localStorage.setItem('cc-sync-code', code); }catch(e){} }
-  else { try{ code = localStorage.getItem('cc-sync-code'); }catch(e){} }
-  if(!code){
-    code = Array.from(crypto.getRandomValues(new Uint8Array(15))).map(b=>'abcdefghjkmnpqrstuvwxyz23456789'[b%31]).join('');
-    try{ localStorage.setItem('cc-sync-code', code); }catch(e){}
-  }
-  window.CC_SYNC_CODE = code;
-
-  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
-  const { getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp } =
-    await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBs8jZeW96DsumVVpK1mANVDvg6-LqUILg",
-    authDomain: "todo-107e0.firebaseapp.com",
-    projectId: "todo-107e0",
-    storageBucket: "todo-107e0.firebasestorage.app",
-    messagingSenderId: "1001442592988",
-    appId: "1:1001442592988:web:1c73371e2a069b4bbd8c19"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const CLIENT = Math.random().toString(36).slice(2);
-  const stateRef = doc(db, 'cc_spaces', code);
-  const blobsCol = collection(db, 'cc_spaces', code, 'blobs');
-  window.BLOBS = window.BLOBS || {};
-  const uploadedBlobs = new Set();
-  let seeded = false;
-
-  /* ---- push local state → cloud (debounced via persist()) ---- */
-  async function pushNow(){
-    try{
-      const s = JSON.parse(JSON.stringify(S));
-      delete s._rev;
-      /* externalize large screenshots into blob docs (1MB doc limit) */
-      for(let i=0;i<(s.contacts||[]).length;i++){
-        const atts = s.contacts[i].attachments||[];
-        for(let j=0;j<atts.length;j++){
-          const a = atts[j];
-          if(a.dataUrl && a.dataUrl.length > 2000){
-            if(!a.blobId) a.blobId = 'b'+Math.random().toString(36).slice(2,12);
-            const live = (S.contacts[i]&&S.contacts[i].attachments[j]);
-            if(live) live.blobId = a.blobId;
-            window.BLOBS[a.blobId] = a.dataUrl;
-            if(!uploadedBlobs.has(a.blobId)){
-              await setDoc(doc(blobsCol, a.blobId), { data: a.dataUrl, name: a.name||'', createdAt: serverTimestamp() });
-              uploadedBlobs.add(a.blobId);
-            }
-            delete a.dataUrl;
-          }
-        }
-      }
-      S._rev = (S._rev||0)+1;
-      await setDoc(stateRef, { state: JSON.stringify(s), rev: S._rev, writer: CLIENT, updatedAt: serverTimestamp() });
-      setSyncState('synced');
-    }catch(e){
-      setSyncState('error');
-      if(typeof toast==='function') toast('⚠️ Cloud sync failed', e.message||'Will retry on next change', 'warn');
-    }
-  }
-  let pushTimer = null;
-  window.CloudPush = function(){ clearTimeout(pushTimer); pushTimer = setTimeout(pushNow, 900); };
-
-  /* ---- cloud → local (the snapshots ARE the state) ---- */
-  onSnapshot(stateRef, snap => {
-    if(!snap.exists()){
-      if(!seeded){ seeded = true; pushNow(); }  /* first-run seeding */
-      return;
-    }
-    setSyncState('synced');
-    const d = snap.data();
-    if(d.writer === CLIENT) return;                 /* our own write echoed back */
-    if((d.rev||0) <= (S._rev||0)) return;           /* stale */
-    try{
-      const incoming = JSON.parse(d.state);
-      incoming._rev = d.rev;
-      S = incoming;
-      Store.save(S);
-      if(document.querySelector('.modal-veil')) window._pendingRender = true;
-      else render();
-      const stamp = document.getElementById('savestamp');
-      if(stamp) stamp.textContent = '☁️ Updated from cloud ' + fmtTime(new Date());
-    }catch(e){ console.warn('sync apply failed', e); }
-  }, err => {
-    setSyncState('error');
-    if(typeof toast==='function') toast('⚠️ Sync error', err.message, 'warn');
-  });
-
-  onSnapshot(blobsCol, qs => {
-    let changed = false;
-    qs.forEach(d => { if(!window.BLOBS[d.id]){ window.BLOBS[d.id] = d.data().data; changed = true; uploadedBlobs.add(d.id); } });
-    if(changed && CC.view==='contacts' && !document.querySelector('.modal-veil')) render();
-  }, ()=>{});
-
-  setSyncState('connecting');
-
-  /* ---- PWA service worker (only when hosted) ---- */
-  if('serviceWorker' in navigator && location.protocol === 'https:'){
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
-}catch(e){
-  /* offline / file:// / blocked network — app runs fully local */
-  setSyncState('offline');
-  window.CC_SYNC_CODE = window.CC_SYNC_CODE || (function(){ try{ return localStorage.getItem('cc-sync-code'); }catch(_){ return null; } })();
-}
 </script>
 </body>
 </html>
