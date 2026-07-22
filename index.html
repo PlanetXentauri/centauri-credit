@@ -387,6 +387,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;heigh
 .aio-body{font-size:12.5px;color:var(--ink-2);line-height:1.6}
 .aio-load{color:var(--ink-3);font-style:italic}
 .aio-tip{margin-top:8px;font-size:11px;color:var(--ink-3)}
+.ai-focus{display:flex;align-items:center;gap:6px;margin:4px 2px 2px;padding:7px 11px;border-radius:10px;font-size:11.5px;color:var(--ink-1);background:linear-gradient(135deg,rgba(250,178,25,.14),rgba(168,85,247,.12));border:1px solid rgba(250,178,25,.4)}
+.ai-focus b{color:var(--ink-1)}
+.ai-focus button{margin-left:auto;background:transparent;border:none;color:var(--ink-3);font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0}
+.ai-focus button:hover{color:var(--crit-text)}
+.enc{display:inline-flex;align-items:center;gap:2px}
+.enc-x{background:transparent;border:1px solid var(--hairline);color:var(--ink-3);width:22px;height:22px;border-radius:7px;cursor:pointer;font-size:10px;flex-shrink:0;line-height:1}
+.enc-x:hover{color:var(--crit-text);border-color:var(--crit-text)}
 
 /* files */
 .dropzone{border:1.5px dashed var(--hairline-2);border-radius:var(--r-lg);padding:34px 20px;text-align:center;color:var(--ink-2);transition:all .2s;cursor:pointer}
@@ -2027,7 +2034,7 @@ function mailCardHTML(m){
     <div style="margin-top:12px">${clock}</div>
 
     ${atts.length?`<div style="margin-top:13px"><div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">📎 Enclosures / files</div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap">${atts.map((a,i)=>`<button class="chip" style="font-size:10.5px" onclick="openMailAtt('${m.id}',${i})">${attSrc(a)?'🖼️':'📄'} ${esc(a.name.length>30?a.name.slice(0,28)+'…':a.name)}</button>`).join('')}</div></div>`:''}
+      <div style="display:flex;gap:7px;flex-wrap:wrap">${atts.map((a,i)=>`<span class="enc"><button class="chip" style="font-size:10.5px" onclick="openMailAtt('${m.id}',${i})">${attSrc(a)?'🖼️':'📄'} ${esc(a.name.length>30?a.name.slice(0,28)+'…':a.name)}</button><button class="enc-x" title="Remove this file from this dispute" onclick="removeMailAtt('${m.id}',${i})">✕</button></span>`).join('')}</div></div>`:''}
 
     <div style="display:flex;gap:8px;margin-top:15px;flex-wrap:wrap">
       ${m.tracking?`<a class="btn sm primary" href="${uspsUrl(m.tracking)}" target="_blank" rel="noopener">🔎 Track on USPS ↗</a>`:''}
@@ -2045,6 +2052,14 @@ function openMailAtt(mid, idx){
   const m = S.mail.find(x=>x.id===mid); if(!m) return;
   const a = (m.attachments||[])[idx]; if(!a) return;
   viewAttachment(a);
+}
+function removeMailAtt(mid, idx){
+  const m = S.mail.find(x=>x.id===mid); if(!m || !m.attachments) return;
+  const a = m.attachments[idx]; if(!a) return;
+  if(!confirm('Remove "'+a.name+'" from "'+m.title+'"?\nThe file stays in your File Center — this only detaches it from this dispute.')) return;
+  m.attachments.splice(idx,1); m.lastChecked = todayISO();
+  persist('Removed enclosure'); render();
+  toast('Detached', a.name+' removed from this dispute','good');
 }
 
 function markShipped(id){
@@ -2469,6 +2484,7 @@ function vAI(){
       <button class="chip" onclick="quickAsk('My Equifax score is now 560')">Update my score</button>
       <button class="chip" onclick="quickAsk('Explain utilization')">Explain utilization</button>
     </div>
+    ${aiFocusChip()}
     <div id="aipending" style="padding:2px 2px 0"></div>
     <div class="chat-input">
       <label class="btn" style="flex-shrink:0;cursor:pointer;padding:9px 13px" title="Attach a file (screenshot, report, letter…)">📎<input type="file" id="aifile" accept="image/*,.pdf,.docx,.txt,.csv,.heic" style="display:none" onchange="aiFileSelected(this)"></label>
@@ -2479,6 +2495,18 @@ function vAI(){
   renderAIPending();
   scrollChat();
 }
+function aiFocusChip(){
+  const f = window._aiFocus; if(!f) return '';
+  let title='';
+  if(f.kind==='dispute'){ const m=(S.mail||[]).find(x=>x.id===f.id); title=m&&m.title; }
+  else if(f.kind==='account'){ const a=(S.accounts||[]).find(x=>x.id===f.id); title=a&&a.name; }
+  else if(f.kind==='contact'){ const c=(S.contacts||[]).find(x=>x.id===f.id); title=c&&c.name; }
+  else if(f.kind==='task'){ const t=(S.tasks||[]).find(x=>x.id===f.id); title=t&&t.title; }
+  if(!title) return '';
+  const canAttach = f.kind==='dispute'||f.kind==='account'||f.kind==='contact';
+  return `<div class="ai-focus">📌 Focused on <b>${esc(title)}</b>${canAttach?' — files you upload attach here':''}<button onclick="clearAIFocus()" title="Clear focus">✕</button></div>`;
+}
+function clearAIFocus(){ window._aiFocus = null; if(typeof vAI==='function') vAI(); }
 function scrollChat(){ const el = $('#chatscroll'); if(el) el.scrollTop = el.scrollHeight; }
 function quickAsk(t){ $('#aiinput').value = t; sendAI(); }
 function sendAI(){
@@ -2536,11 +2564,24 @@ function intakeFile(pf, text){
     name:pf.name, kind: pf.kind + (text?(' · '+text.slice(0,44)):''), date:todayISO(), size:'—',
     dataUrl: pf.dataUrl||null, extract: text||'Uploaded via Centauri AI' });
 
-  /* 2) connect it to the right thing, based on what you said */
+  /* 2) connect it to the right thing.
+     If you tapped ⭐ on a specific item, THAT wins — the file attaches
+     exactly where you pointed it, no keyword guessing. Only if nothing is
+     focused do we fall back to matching on what you typed. */
   const linked = [], did = [];
-  const mail = matchDispute(t);
-  const contact = (S.contacts||[]).find(c=> c.name.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w)));
-  const acc = findAccount(t);
+  const focus = window._aiFocus || null;
+  let mail=null, contact=null, acc=null, viaFocus=false;
+  if(focus){
+    if(focus.kind==='dispute') mail = (S.mail||[]).find(m=>m.id===focus.id) || null;
+    else if(focus.kind==='contact') contact = (S.contacts||[]).find(c=>c.id===focus.id) || null;
+    else if(focus.kind==='account') acc = (S.accounts||[]).find(a=>a.id===focus.id) || null;
+    viaFocus = !!(mail||contact||acc);
+  }
+  if(!viaFocus){
+    mail = matchDispute(t);
+    contact = (S.contacts||[]).find(c=> c.name.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w)));
+    acc = findAccount(t);
+  }
 
   if(mail){
     mail.attachments = mail.attachments||[]; mail.attachments.push(att); mail.lastChecked = todayISO();
@@ -2567,7 +2608,7 @@ function intakeFile(pf, text){
 
   /* 5) confirm */
   let head = `📎 Filed “${pf.name}” in your File Center${pf.isImage?' — tap it there to view':''}.`;
-  if(linked.length) head += `\n🔗 Connected it to ${linked.join(' & ')}.`;
+  if(linked.length) head += `\n🔗 Connected it to ${linked.join(' & ')}${viaFocus?' 📌 (the item you ⭐ chose)':''}.`;
   if(did.length) head += `\n✅ ${did.join('; ')}.`;
   head += `\n🕐 Logged to your timeline.`;
   if(brain) return head + `\n\n— — —\n` + brain;
@@ -2869,6 +2910,9 @@ async function askAIAbout(kind, id){
     : kind==='contact' ? S.contacts.find(c=>c.id===id)
     : (S.mail||[]).find(m=>m.id===id);
   if(!item){ render(); return; }
+  /* 📌 Remember exactly what you tapped. Any file you upload next attaches
+     HERE — no keyword guessing, no landing in the wrong dispute. */
+  window._aiFocus = { kind, id };
   const shown = `⭐ Help me with this ${kind}: “${item.title||item.name}”`;
   S.chat.push({ who:'me', text: shown });
   if(typeof ccKey==='function' && ccKey()){
@@ -2923,7 +2967,7 @@ async function sendAI(){
    AUTO-UPDATER — propagate any new deploy to every device
    Bump APP_BUILD on each deploy; online devices refresh themselves.
    ================================================================ */
-window.APP_BUILD = "b17-20260722";
+window.APP_BUILD = "b18-20260722";
 (function(){
   var CHECK_MS = 150000; // ~2.5 min
   function build(){ return window.APP_BUILD || ''; }
