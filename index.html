@@ -139,6 +139,11 @@ a{color:var(--accent)}
 .badge{font-weight:700}
 .empty{font-size:14px;font-weight:520;color:var(--ink-2)}
 .nav-btn{font-size:14px;font-weight:600}
+.ai-star{flex-shrink:0;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;
+  background:linear-gradient(135deg,rgba(250,178,25,.22),rgba(168,85,247,.22));border:1px solid rgba(250,178,25,.45);
+  box-shadow:0 0 10px rgba(250,178,25,.25);cursor:pointer;transition:transform .15s,box-shadow .15s;line-height:1}
+.ai-star:hover{transform:scale(1.12);box-shadow:0 0 16px rgba(250,178,25,.5)}
+.task-row .ai-star{margin-top:1px}
 .sim-toggle{font-size:13px;color:var(--ink-1)}
 .sim-row label{font-size:13px;color:var(--ink-1);font-weight:520}
 .est-note b{color:var(--ink-1)}
@@ -327,6 +332,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;heigh
 .sim-result .snum{font-size:52px;font-weight:700;letter-spacing:-.02em}
 .sim-result .sd{font-size:13px;font-weight:650;margin-top:2px}
 .est-note{font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5;text-align:center}
+/* simulator v2 */
+.sim-hint{font-size:10.5px;color:var(--ink-3);line-height:1.4}
+.sim-select{width:100%;padding:9px 11px;border-radius:10px;background:var(--glass-raise);border:1px solid var(--hairline);color:var(--ink-1);font-size:12.5px}
+.warn-toggle{color:var(--crit-text)}
+.btn-claude{margin-top:16px;width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(250,178,25,.45);background:linear-gradient(135deg,rgba(250,178,25,.18),rgba(168,85,247,.20));color:var(--ink-1);font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 0 14px rgba(250,178,25,.18);transition:transform .12s,box-shadow .2s}
+.btn-claude:hover{transform:translateY(-1px);box-shadow:0 0 22px rgba(250,178,25,.32)}
+.btn-claude:disabled{opacity:.7;cursor:default}
+.sim-breakdown{margin-top:14px;display:grid;gap:1px}
+.bd-title{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.bd-empty{font-size:11.5px;color:var(--ink-3);text-align:center;padding:6px 0}
+.bd-row{display:flex;gap:11px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--hairline)}
+.bd-row:first-of-type{border-top:none}
+.bd-pts{flex-shrink:0;min-width:42px;text-align:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;padding:2px 0;border-radius:8px}
+.bd-pts.up{color:var(--good-text);background:rgba(25,158,112,.12)}
+.bd-pts.down{color:var(--crit-text);background:rgba(229,87,87,.12)}
+.bd-body{display:flex;flex-direction:column;gap:1px}
+.bd-body b{font-size:12.5px;color:var(--ink-1)}
+.bd-body span{font-size:11px;color:var(--ink-3);line-height:1.4}
+.sim-edu p{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin:0 0 12px}
+.sim-edu b{color:var(--ink-1)}
+.edu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 14px}
+.edu-grid>div{background:var(--glass-raise);border:1px solid var(--hairline);border-radius:12px;padding:11px 13px;display:flex;flex-direction:column;gap:4px}
+.edu-grid>div b{font-size:12.5px}
+.edu-grid>div span{font-size:11px;color:var(--ink-3);line-height:1.45}
+.edu-foot{font-size:11.5px !important;color:var(--ink-3) !important;border-top:1px solid var(--hairline);padding-top:12px}
+@media(max-width:720px){.edu-grid{grid-template-columns:1fr}}
 
 /* files */
 .dropzone{border:1.5px dashed var(--hairline-2);border-radius:var(--r-lg);padding:34px 20px;text-align:center;color:var(--ink-2);transition:all .2s;cursor:pointer}
@@ -1405,6 +1436,7 @@ function vAccounts(){
       <td class="hide-m num">${a.apr?a.apr+'%':'—'}</td>
       <td class="hide-m">${a.dueDay?('Day '+a.dueDay):'—'}</td>
       <td class="hide-t"><span class="badge ${/Collection|Charge-Off/i.test(a.status)?'crit':/Current/.test(a.status)?'good':'neutral'}" style="white-space:nowrap">${esc(a.status)}</span></td>
+      <td style="text-align:center"><button class="ai-star" title="Ask Centauri AI about this account" onclick="event.stopPropagation();askAIAbout('account','${a.id}')">⭐</button></td>
     </tr>`;
   }).join('');
   $('#view').innerHTML = `
@@ -1416,7 +1448,7 @@ function vAccounts(){
   <div class="card">
     <h3>All Accounts <span class="more" onclick="openAccountForm()">➕ Add account</span></h3>
     <div style="overflow-x:auto"><table class="tbl">
-      <thead><tr><th>Account</th><th>Balance</th><th class="hide-m">Limit</th><th>Utilization</th><th class="hide-m">APR</th><th class="hide-m">Due</th><th class="hide-t">Status</th></tr></thead>
+      <thead><tr><th>Account</th><th>Balance</th><th class="hide-m">Limit</th><th>Utilization</th><th class="hide-m">APR</th><th class="hide-m">Due</th><th class="hide-t">Status</th><th style="width:38px">⭐</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
   </div>`;
 }
@@ -1534,6 +1566,7 @@ function taskRowHTML(t){
         ${t.note?`<span style="color:var(--ink-3)">· ${esc(t.note)}</span>`:''}
       </div>
     </div>
+    <button class="ai-star" title="Ask Centauri AI about this" onclick="event.stopPropagation();askAIAbout('task','${t.id}')">⭐</button>
     <button style="color:var(--ink-3);font-size:13px;padding:4px" title="Delete" onclick="deleteTask('${t.id}')">✕</button>
   </div>`;
 }
@@ -1659,7 +1692,8 @@ function contactCardHTML(c){
   const links = c.links||[], addrs = c.addresses||[], atts = c.attachments||[];
   return `<div class="card contact-card">
     <div class="ch"><div class="acct-logo" style="font-size:18px">${c.emoji}</div>
-      <div><b style="font-size:14px">${esc(c.name)}</b><div class="acct-sub">${esc(c.kind)}${c.rep&&c.rep!=='—'?' · '+esc(c.rep):''}</div></div></div>
+      <div style="flex:1;min-width:0"><b style="font-size:14px">${esc(c.name)}</b><div class="acct-sub">${esc(c.kind)}${c.rep&&c.rep!=='—'?' · '+esc(c.rep):''}</div></div>
+      <button class="ai-star" title="Ask Centauri AI about this contact" onclick="askAIAbout('contact','${c.id}')">⭐</button></div>
     <div class="cb">
       ${c.phone&&c.phone!=='—'?`<div class="crow"><span class="ci">📞</span><a href="tel:${c.phone.replace(/[^0-9+]/g,'')}">${esc(c.phone)}</a></div>`:''}
       ${c.email?`<div class="crow"><span class="ci">📧</span><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></div>`:''}
@@ -1939,7 +1973,10 @@ function mailCardHTML(m){
         <b style="font-size:14.5px">${esc(m.title)}</b>
         <div class="acct-sub">${esc(m.kind)} · to ${esc(m.to)}</div>
       </div>
-      <span class="badge ${st.tone}" style="font-size:11px">${st.emoji} ${st.label}</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="badge ${st.tone}" style="font-size:11px">${st.emoji} ${st.label}</span>
+        <button class="ai-star" title="Ask Centauri AI about this dispute" onclick="askAIAbout('dispute','${m.id}')">⭐</button>
+      </div>
     </div>
 
     <div style="display:flex;align-items:flex-start;margin:16px 2px 6px">${stepper}</div>
@@ -2054,26 +2091,114 @@ function saveMail(id){
    SCORE SIMULATOR
    ================================================================ */
 function simEstimate(opts){
-  // Rule-of-thumb FICO deltas. Clearly labeled estimates in UI.
-  const r = revolvers();
-  const curBal = r.reduce((s,a)=>s+a.balance,0), curLim = r.reduce((s,a)=>s+a.limit,0);
-  let bal = Math.max(0, curBal - (opts.pay||0));
+  /* ---------------------------------------------------------------
+     Research-grounded, profile-aware FICO estimator.
+     Grounded in published FICO factor weights & myFICO point behavior:
+       • Amounts owed / utilization = 30% of score, no memory (resets
+         every statement), the biggest *movable* lever.
+       • Utilization is scored BOTH overall and per-card; a single
+         maxed card drags every model.
+       • Lower / thinner files react MORE to the same move; thick
+         clean files have less headroom (diminishing returns).
+       • Removing an unpaid derogatory (collection / charge-off win)
+         is worth roughly +10 to +40 FICO depending on the file.
+       • A hard inquiry ≈ −3 to −5; a brand-new account also dings
+         average age of accounts. A fresh 30-day late is severe,
+         and worse for a clean file than an already-damaged one.
+     Everything here is a *directional estimate*, not a promise.
+  --------------------------------------------------------------- */
+  const avg = avgScore();
+  // Sensitivity: damaged/thin files move more per point of change.
+  const gain = avg < 560 ? 1.35 : avg < 600 ? 1.2 : avg < 660 ? 1.0
+             : avg < 720 ? 0.78 : 0.58;
+  // Inverse: clean files fall HARDER on a new derogatory event.
+  const fall = avg < 560 ? 0.55 : avg < 600 ? 0.7 : avg < 660 ? 0.9
+             : avg < 720 ? 1.25 : 1.6;
+
+  const r = revolvers().map(a=>({ id:a.id, name:a.name, bal:a.balance, lim:a.limit }));
+  const curBal = r.reduce((s,a)=>s+a.bal,0), curLim = r.reduce((s,a)=>s+a.lim,0);
+
+  // Greedy paydown: pay the highest-utilization card first (best ROI),
+  // exactly how a knowledgeable optimizer would sequence dollars.
+  let pool = Math.max(0, opts.pay||0);
+  const after = r.map(a=>({ ...a })).sort((x,y)=> (y.lim?y.bal/y.lim:0)-(x.lim?x.bal/x.lim:0));
+  for(const a of after){ if(pool<=0) break; const cut=Math.min(pool, a.bal); a.bal-=cut; pool-=cut; }
+
   let lim = curLim + (opts.cli||0);
-  if(opts.newCard) lim += 2000;
-  const curU = curLim? curBal/curLim*100 : 0;
-  const newU = lim? bal/lim*100 : 0;
-  let delta = 0;
-  const uScore = u => u<1?18 : u<10?22 : u<30?12 : u<50?2 : u<75?-8 : -18;
-  delta += uScore(newU) - uScore(curU);
-  if(opts.removeCollection && hasCollections()) delta += 27;
-  if(opts.newCard) delta -= 6;           // inquiry + new account + AAoA hit
-  if(opts.newInquiry) delta -= 4;
-  if(opts.lateFalls) delta += 9;
-  return { delta: Math.round(delta), newU, curU };
+  if(opts.newCard) lim += 2000;               // typical starter limit
+  const newBal = after.reduce((s,a)=>s+a.bal,0);
+  const curU = curLim ? curBal/curLim*100 : 0;
+  const newU = lim ? newBal/lim*100 : 0;
+
+  // Utilization scoring curve (higher = better). Optimal ≈ 1-9%.
+  const uPts = u =>
+      u<=0 ? 46 : u<1 ? 52 : u<10 ? 50 : u<20 ? 41 : u<30 ? 32
+    : u<40 ? 24 : u<50 ? 17 : u<60 ? 11 : u<75 ? 5 : u<90 ? -3
+    : u<100 ? -12 : -22;
+
+  // Per-card "maxed" flag: cards ≥90% utilized each carry a penalty.
+  const maxedCur = r.filter(a=>a.lim && a.bal/a.lim>=0.9).length;
+  const distLim = opts.newCard ? 2000 : 0;
+  const maxedNew = after.filter(a=>a.lim && a.bal/a.lim>=0.9).length;
+
+  const bd = [];
+  const push = (label,pts,why)=>{ if(pts) bd.push({ label, pts:Math.round(pts), why }); };
+
+  // 1) Overall utilization
+  const uDelta = (uPts(newU) - uPts(curU)) * gain;
+  if(Math.abs(uDelta) >= 0.5)
+    push('Overall utilization', uDelta,
+      `${fmtPct(curU)} → ${fmtPct(newU)} of your revolving limits`);
+
+  // 2) Per-card maxed relief / new maxed card
+  const maxedDelta = (maxedCur - maxedNew) * 7 * gain;
+  if(maxedDelta > 0) push('Un-maxing a card', maxedDelta,
+    `${maxedCur} card(s) over 90% → ${maxedNew}. Single maxed cards hurt every model.`);
+  else if(maxedDelta < 0) push('A card left near-maxed', maxedDelta,
+    `${maxedNew} card(s) over 90% utilized`);
+
+  // 3) Derogatory removed
+  if(opts.removeDerogId){
+    const d = S.accounts.find(a=>a.id===opts.removeDerogId);
+    if(d){
+      const base = /charge-off/i.test(d.status) ? 24 : 20;
+      const solo = unpaidDerogs().length <= 1 ? 6 : 0;   // last major derog = bigger jump
+      let pts = clamp(Math.round((base+solo)*gain), 10, 42);
+      push('Derogatory deleted', pts, `${d.name} removed (dispute win / goodwill / falls off)`);
+    }
+  }
+
+  // 4) New credit card opened (util benefit already counted above)
+  if(opts.newCard){
+    push('New account + inquiry', -(5+4)*Math.max(0.6,gain*0.7),
+      'Hard pull (−) and a brand-new account lowers your average age');
+  }
+  // 5) Standalone hard inquiry
+  if(opts.newInquiry)
+    push('New hard inquiry', -4*Math.max(0.6,gain*0.7), 'One extra hard pull (rate shopping)');
+
+  // 6) Old late payment ages past 24 months (recency fades)
+  if(opts.lateFalls)
+    push('Late payment ages out', 10*gain, 'A 30-day late crossing 24 months old — recency impact fades');
+
+  // 7) A NEW 30-day late lands (worst-case scenario)
+  if(opts.newLate)
+    push('A NEW 30-day late', -clamp(Math.round(65*fall),30,120),
+      'Most damaging single event — and it hits a cleaner file harder');
+
+  // 8) Pay down an installment loan (minor lever)
+  if(opts.payInstall>0)
+    push('Installment paydown', Math.min(9, opts.payInstall/1500), 'Loan balances matter less than card balances, but still help');
+
+  const delta = Math.round(bd.reduce((s,b)=>s+b.pts,0));
+  return { delta, newU, curU, breakdown: bd, gain };
 }
+
 function vSimulator(){
-  $('#topbar').innerHTML = topbarHTML('🧮 Score Simulator', 'Test moves before you make them — instant FICO estimates');
-  const maxPay = revolvers().reduce((s,a)=>s+a.balance,0);
+  $('#topbar').innerHTML = topbarHTML('🧮 Score Simulator', 'Model real credit moves — grounded in published FICO scoring math');
+  const maxPay = Math.max(50, Math.round(revolvers().reduce((s,a)=>s+a.balance,0)));
+  const maxInst = Math.round(S.accounts.filter(a=>/loan/i.test(a.type)&&isOpenAcct(a)).reduce((s,a)=>s+a.balance,0));
+  const derogOpts = unpaidDerogs().map(a=>`<option value="${a.id}">${a.name} — ${fmt$(a.balance)}</option>`).join('');
   $('#view').innerHTML = `
   <div class="grid section" style="grid-template-columns:5fr 4fr" id="simgrid">
     <div class="card">
@@ -2081,24 +2206,38 @@ function vSimulator(){
       <div class="sim-controls">
         <div class="sim-row">
           <label>💰 Pay down card balances <b id="sv-pay">$0</b></label>
-          <input type="range" id="sim-pay" min="0" max="${maxPay}" step="25" value="0" oninput="runSim()">
+          <input type="range" id="sim-pay" min="0" max="${maxPay}" step="10" value="0" oninput="runSim()">
+          <div class="sim-hint">Applied to your highest-utilization card first (best point-per-dollar).</div>
         </div>
         <div class="sim-row">
-          <label>📈 Credit limit increase <b id="sv-cli">$0</b></label>
+          <label>📈 Credit-limit increase <b id="sv-cli">$0</b></label>
           <input type="range" id="sim-cli" min="0" max="10000" step="250" value="0" oninput="runSim()">
+          <div class="sim-hint">More limit = lower utilization with no paydown.</div>
         </div>
-        <label class="sim-toggle"><input type="checkbox" id="sim-coll" onchange="runSim()"> 🗑 A derogatory deleted (AT&T dispute wins / duplicate removed)</label>
-        <label class="sim-toggle"><input type="checkbox" id="sim-card" onchange="runSim()"> 💳 Open a new card (+$2,000 limit, −1 inquiry)</label>
-        <label class="sim-toggle"><input type="checkbox" id="sim-inq" onchange="runSim()"> 🔍 One new hard inquiry (rate shopping)</label>
-        <label class="sim-toggle"><input type="checkbox" id="sim-late" onchange="runSim()"> 🕐 Late payment ages past 24 months</label>
+        ${derogOpts?`<div class="sim-row">
+          <label>🗑 Delete a derogatory (dispute win / falls off)</label>
+          <select id="sim-derog" onchange="runSim()" class="sim-select">
+            <option value="">— none —</option>${derogOpts}
+          </select>
+        </div>`:''}
+        ${maxInst?`<div class="sim-row">
+          <label>🎓 Pay down loan balances <b id="sv-inst">$0</b></label>
+          <input type="range" id="sim-inst" min="0" max="${maxInst}" step="100" value="0" oninput="runSim()">
+        </div>`:''}
+        <label class="sim-toggle"><input type="checkbox" id="sim-card" onchange="runSim()"> 💳 Open a new card (+$2,000 limit, −1 inquiry, −age)</label>
+        <label class="sim-toggle"><input type="checkbox" id="sim-inq" onchange="runSim()"> 🔍 One new hard inquiry</label>
+        <label class="sim-toggle"><input type="checkbox" id="sim-late" onchange="runSim()"> 🕐 An old late payment ages past 24 months</label>
+        <label class="sim-toggle warn-toggle"><input type="checkbox" id="sim-newlate" onchange="runSim()"> ⚠️ You miss a payment (new 30-day late)</label>
       </div>
       <div class="chips" style="margin-top:14px">
-        <button class="chip" onclick="presetSim(1000,0,0,0,0,0)">“What if I pay $1,000?”</button>
-        <button class="chip" onclick="presetSim(${Math.max(0,Math.round(maxPay-0.08*revolvers().reduce((s,a)=>s+a.limit,0)))},0,0,0,0,0)">“Utilization → 8%”</button>
-        <button class="chip" onclick="presetSim(0,0,1,0,0,0)">“AT&T gets deleted”</button>
-        <button class="chip" onclick="presetSim(0,2000,0,0,0,0)">“Get a $2k CLI”</button>
-        <button class="chip" onclick="presetSim(0,0,0,1,0,0)">“Open a new card”</button>
+        <button class="chip" onclick="presetSim({pay:${Math.min(1000,maxPay)}})">“Pay it to zero”</button>
+        <button class="chip" onclick="presetSim({cli:3000})">“Get a $3k limit bump”</button>
+        ${derogOpts?`<button class="chip" onclick="presetDerog()">“A derogatory gets deleted”</button>`:''}
+        <button class="chip" onclick="presetSim({card:1})">“Open a new card”</button>
+        <button class="chip" onclick="presetSim({newlate:1})">“I miss a payment”</button>
+        <button class="chip" onclick="presetSim({})">↺ Reset</button>
       </div>
+      <button class="btn-claude" id="sim-ask" onclick="askClaudeSim()">⭐ Ask Centauri AI to analyze this scenario</button>
     </div>
     <div class="card">
       <h3>🔮 Estimated Outcome</h3>
@@ -2110,30 +2249,68 @@ function vSimulator(){
         <div id="sim-utilbar">${utilBar(totalUtil())}</div>
         <div id="sim-bureaus" style="margin-top:16px;display:grid;gap:8px"></div>
       </div>
-      <div class="est-note">⚠️ These are directional <b>estimates</b> based on published FICO factor weights — not guarantees. Actual changes depend on your full file and each bureau’s data.</div>
+      <div id="sim-breakdown" class="sim-breakdown"></div>
+      <div class="est-note">⚠️ Directional <b>estimates</b> from published FICO factor weights (Payments 35% · Amounts owed 30% · Age 15% · New credit 10% · Mix 10%) — not guarantees. Your real move depends on your full file and each bureau’s data.</div>
+    </div>
+  </div>
+  <div class="card section" style="margin-top:18px">
+    <h3>📚 How credit-score simulators actually work</h3>
+    <div class="sim-edu">
+      <p>A simulator can’t see FICO’s exact formula (it’s proprietary), so every one of them — myFICO’s included — estimates by moving your data through the <b>five published factor weights</b> and watching how each lever shifts the categories:</p>
+      <div class="edu-grid">
+        <div><b>Payment history — 35%</b><span>The heaviest factor. One new 30-day late is the single most damaging thing you can do, and it stings a clean file more than an already-bruised one.</span></div>
+        <div><b>Amounts owed — 30%</b><span>Utilization. Your biggest <i>movable</i> lever because it has no memory — it resets every statement. Scored overall <i>and</i> per card; one maxed card drags all models. Sweet spot is 1–9%.</span></div>
+        <div><b>Length of history — 15%</b><span>Average age of accounts. Opening anything new lowers it; closing old cards eventually hurts. This one only moves with time.</span></div>
+        <div><b>New credit — 10%</b><span>Hard inquiries (≈ −3 to −5 each) and brand-new accounts. Rate-shopping the same loan type in a short window counts as one.</span></div>
+        <div><b>Credit mix — 10%</b><span>A blend of revolving (cards) and installment (loans) helps a little — not worth opening debt you don’t need.</span></div>
+      </div>
+      <p class="edu-foot">Two people can make the same move and get different point changes: <b>thinner or lower-scoring files swing more</b>, and removing your <i>last</i> major derogatory jumps more than removing one of several. That’s why this tool weights every estimate against <i>your</i> actual ${avgScore()} average — and why the AI button above can reason through the trade-offs in plain English.</p>
     </div>
   </div>`;
   if(window.innerWidth<=1060) $('#simgrid').style.gridTemplateColumns='1fr';
   runSim();
 }
-function presetSim(pay,cli,coll,card,inq,late){
-  $('#sim-pay').value = Math.min(pay, +$('#sim-pay').max);
-  $('#sim-cli').value = cli;
-  $('#sim-coll').checked = !!coll; $('#sim-card').checked = !!card;
-  $('#sim-inq').checked = !!inq; $('#sim-late').checked = !!late;
+
+function readSim(){
+  const g = id => document.getElementById(id);
+  return {
+    pay: g('sim-pay')? +g('sim-pay').value : 0,
+    cli: g('sim-cli')? +g('sim-cli').value : 0,
+    payInstall: g('sim-inst')? +g('sim-inst').value : 0,
+    removeDerogId: g('sim-derog')? g('sim-derog').value : '',
+    newCard: g('sim-card') && g('sim-card').checked,
+    newInquiry: g('sim-inq') && g('sim-inq').checked,
+    lateFalls: g('sim-late') && g('sim-late').checked,
+    newLate: g('sim-newlate') && g('sim-newlate').checked
+  };
+}
+
+function presetSim(o){
+  o = o||{};
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e){ if(e.type==='checkbox') e.checked=!!v; else e.value=v; } };
+  set('sim-pay', Math.min(o.pay||0, +($('#sim-pay').max))); set('sim-cli', o.cli||0);
+  set('sim-inst', o.inst||0); set('sim-derog', o.derog||'');
+  set('sim-card', o.card||0); set('sim-inq', o.inq||0);
+  set('sim-late', o.late||0); set('sim-newlate', o.newlate||0);
   runSim();
 }
+function presetDerog(){
+  const s = document.getElementById('sim-derog');
+  if(s && s.options.length>1){ s.selectedIndex = 1; }
+  runSim();
+}
+
 function runSim(){
-  const opts = { pay:+$('#sim-pay').value, cli:+$('#sim-cli').value,
-    removeCollection:$('#sim-coll').checked, newCard:$('#sim-card').checked,
-    newInquiry:$('#sim-inq').checked, lateFalls:$('#sim-late').checked };
-  $('#sv-pay').textContent = fmt$(opts.pay);
-  $('#sv-cli').textContent = '+'+fmt$(opts.cli);
+  const opts = readSim();
+  if($('#sv-pay')) $('#sv-pay').textContent = fmt$(opts.pay);
+  if($('#sv-cli')) $('#sv-cli').textContent = '+'+fmt$(opts.cli);
+  if($('#sv-inst')) $('#sv-inst').textContent = fmt$(opts.payInstall);
   const est = simEstimate(opts);
+  window.CC_lastSim = { opts, est };
   const proj = clamp(avgScore()+est.delta, 300, 850);
   $('#sim-score').textContent = proj;
   const d = $('#sim-delta');
-  d.textContent = est.delta===0? 'no change' : (est.delta>0? `▲ +${est.delta} points (est.)` : `▼ ${est.delta} points (est.)`);
+  d.textContent = est.delta===0? 'no change yet' : (est.delta>0? `▲ +${est.delta} points (est.)` : `▼ ${est.delta} points (est.)`);
   d.style.color = est.delta>0? 'var(--good-text)' : est.delta<0? 'var(--crit-text)' : 'var(--ink-3)';
   $('#sim-util').textContent = fmtPct(est.newU);
   $('#sim-utilbar').innerHTML = utilBar(est.newU);
@@ -2144,6 +2321,50 @@ function runSim(){
       <i style="width:8px;height:8px;border-radius:50%;background:var(${cvar});flex-shrink:0"></i>
       ${BMETA[k].label}<span style="margin-left:auto" class="num">${S.scores[k].current} → <b>${p}</b></span></div>`;
   }).join('');
+  const bx = $('#sim-breakdown');
+  if(bx){
+    if(!est.breakdown.length){ bx.innerHTML = '<div class="bd-empty">Move a slider or check a box to see how each factor changes your score.</div>'; }
+    else bx.innerHTML = '<div class="bd-title">Why this number</div>' + est.breakdown.map(b=>`
+      <div class="bd-row">
+        <span class="bd-pts ${b.pts>0?'up':'down'}">${b.pts>0?'+':''}${b.pts}</span>
+        <span class="bd-body"><b>${b.label}</b><span>${b.why}</span></span>
+      </div>`).join('');
+  }
+}
+
+async function askClaudeSim(){
+  const btn = document.getElementById('sim-ask');
+  const s = window.CC_lastSim || { opts:readSim(), est:simEstimate(readSim()) };
+  const parts = s.est.breakdown.map(b=>`${b.pts>0?'+':''}${b.pts} pts — ${b.label} (${b.why})`).join('; ') || 'no changes selected';
+  const q = `I'm using the score simulator. Scenario: pay $${s.opts.pay} toward cards, +$${s.opts.cli} limit increase, `
+    + `${s.opts.removeDerogId?'delete a derogatory, ':''}${s.opts.payInstall?('pay $'+s.opts.payInstall+' toward loans, '):''}`
+    + `${s.opts.newCard?'open a new card, ':''}${s.opts.newInquiry?'one new inquiry, ':''}${s.opts.lateFalls?'an old late ages past 24mo, ':''}${s.opts.newLate?'I miss a payment (new 30-day late), ':''}`
+    + `— the built-in estimate is ${s.est.delta>=0?'+':''}${s.est.delta} points (utilization ${fmtPct(s.est.curU)} → ${fmtPct(s.est.newU)}). Breakdown: ${parts}. `
+    + `Given my real accounts and my ${avgScore()} average, is this a smart move? What would you prioritize first, and what am I missing? Be specific and concise.`;
+  if(typeof ccKey==='function' && ccKey()){
+    if(btn){ btn.disabled=true; btn.textContent='⭐ Analyzing your scenario…'; }
+    go('ai');
+    S.chat.push({ who:'me', text:'Analyze my simulator scenario ▸' });
+    S.chat.push({ who:'ai', text:'…', pending:true });
+    vAI();
+    try{
+      const { reply } = await askClaude(q);
+      S.chat = S.chat.filter(m=>!m.pending);
+      S.chat.push({ who:'ai', text: reply });
+    }catch(e){
+      S.chat = S.chat.filter(m=>!m.pending);
+      S.chat.push({ who:'ai', text:'Could not reach Claude — check your API key in AI settings. Meanwhile: paying your highest-utilization card down first is almost always the fastest, safest point gain.' });
+    }
+    persist('sim analysis');
+    vAI();
+  } else {
+    go('ai');
+    S.chat.push({ who:'me', text:'Analyze my simulator scenario ▸' });
+    S.chat.push({ who:'ai', text:`Here's the read on that scenario:\n\n• Estimated change: ${s.est.delta>=0?'+':''}${s.est.delta} pts (utilization ${fmtPct(s.est.curU)} → ${fmtPct(s.est.newU)}).\n• ${parts}.\n\nBiggest, safest lever is almost always paying your highest-utilization card down before the statement cuts — utilization resets every month, so it's the fastest gain with zero downside. Connect your Claude key in AI settings for a full personalized breakdown.` });
+    persist('sim analysis');
+    vAI();
+  }
+  if(btn){ btn.disabled=false; btn.textContent='⭐ Ask Centauri AI to analyze this scenario'; }
 }
 
 /* ================================================================
@@ -2530,6 +2751,61 @@ function execCcActions(list){
   return did;
 }
 
+/* ---- ⭐ per-item AI: tap the star on a task or dispute, Claude reads it and helps ---- */
+function aiItemBrief(kind, item){
+  if(kind==='contact'){
+    const c=item;
+    return `⭐ ${c.name} (${c.kind})\n\n${c.phone&&c.phone!=='—'?`📞 ${c.phone}\n`:''}${c.web?`🌐 ${c.web}\n`:''}${(c.addresses||[]).map(a=>`✉️ ${a.label?a.label+': ':''}${a.text}`).join('\n')}${c.next?`\n📅 Next follow-up: ${fmtDate(c.next)}`:''}\n${c.notes?`\n${c.notes}\n`:''}\n👉 ${/bureau/i.test(c.kind)?'When you call/write, be specific about the exact item you’re disputing and reference any FTC report or file number.':/collector/i.test(c.kind)?'Everything in writing, never admit the debt by phone, and get any deal (settlement/pay-for-delete) in writing before paying.':/bank|union/i.test(c.kind)?'Have your account details ready; for CLIs/graduation ask for a soft pull only.':'Keep notes of who you spoke with and any confirmation numbers.'}\n\nWant me to log a call or set a follow-up reminder? Just tell me what happened.`;
+  }
+  if(kind==='account'){
+    const a=item, u=acctUtil(a), rev=isRevolving(a);
+    let tip;
+    if(/charge-off/i.test(a.status)) tip = a.balance>0 ? `Unpaid charge-off (${fmt$(a.balance)}). Best play: a written settlement with deletion as a condition — never admit the debt by phone. Or dispute if any detail is inaccurate.` : 'Paid charge-off — send a goodwill-deletion letter (FICO 8 still counts it, so deletion is the win).';
+    else if(/collection/i.test(a.status)) tip = 'Collection — dispute it first (especially if the bureaus disagree), then pay-for-delete in writing if it verifies.';
+    else if(rev && a.limit && u>=30) tip = `Utilization is ${fmtPct(u)} — pay it under 10%. About ${fmt$(Math.max(0,a.balance-a.limit*0.09))} gets you there. Do it a few days before the statement cuts.`;
+    else if(rev && a.limit) tip = `Utilization ${fmtPct(u)} — solid. Keep the reported balance in the single digits and never let it get maxed.`;
+    else tip = 'Keep it current and on autopay — every clean month helps.';
+    return `⭐ ${a.name} (${a.type})\n\n💰 Balance ${fmt$(a.balance)}${a.limit?` / ${fmt$(a.limit)} limit`:''}${rev&&a.limit?` · ${fmtPct(u)} utilization`:''}\n📋 ${a.status}\n🕐 ${a.history||''}\n${a.notes?`\n${a.notes}\n`:''}\n👉 ${tip}\n\nWant me to log a payment or add a task for this? Just say e.g. “paid ${a.name.split(' ')[0]} $50”.`;
+  }
+  if(kind==='task'){
+    return `⭐ ${item.title}\n\n${item.prio==='high'?'🔴 High priority. ':item.prio==='med'?'🟡 Medium priority. ':''}${item.due?`📅 Due ${fmtDate(item.due)}.\n`:''}${item.impact?`📈 Impact: ${esc0(item.impact)}.\n`:''}${item.note?`\n${item.note}\n`:''}\nWhen it’s done, tell me and I’ll check it off — or say “remind me” and I’ll set a follow-up. Want the step-by-step?`;
+  }
+  const m=item, due=responseDue(m);
+  const next = m.status==='prepared' ? 'mail it Certified, then tell me the tracking number and I’ll mark it Shipped'
+    : (m.status==='shipped'||m.status==='in_transit') ? 'tell me when it’s delivered and I’ll start the 30-day clock'
+    : m.status==='delivered' ? 'wait for their written response — I’m watching the deadline; upload it here when it arrives'
+    : m.status==='responded' ? 'review their response — if they wrongly verified it, we file the CFPB complaint next'
+    : 'nothing — it’s resolved 🎉';
+  return `⭐ ${m.title}\n\nStatus: ${mailStage(m.status).label}${m.tracking?` · tracking ${m.tracking}`:''}.\n✉️ Mail to: ${m.to}${m.dept?' — '+m.dept:''}, ${m.toAddress}.\n${m.shipDate?`📅 ${m.status==='prepared'?'Ships':'Shipped'} ${fmtDate(m.shipDate)}.\n`:''}${due?`🗓 Est. response deadline ${fmtDate(due)}.\n`:''}${m.notes?`\n${m.notes}\n`:''}\n👉 Next: ${next}. I can mark it shipped/delivered or save a tracking number — just tell me.`;
+}
+function esc0(s){ return String(s==null?'':s); }
+async function askAIAbout(kind, id){
+  CC.view = 'ai';
+  const item = kind==='account' ? S.accounts.find(a=>a.id===id)
+    : kind==='task' ? S.tasks.find(t=>t.id===id)
+    : kind==='contact' ? S.contacts.find(c=>c.id===id)
+    : (S.mail||[]).find(m=>m.id===id);
+  if(!item){ render(); return; }
+  const shown = `⭐ Help me with this ${kind}: “${item.title||item.name}”`;
+  S.chat.push({ who:'me', text: shown });
+  if(typeof ccKey==='function' && ccKey()){
+    const detail = kind==='contact'
+      ? `The user tapped ⭐ on this CONTACT. Name: "${item.name}" (${item.kind}). Phone: ${item.phone||'—'}. Notes: ${item.notes||'—'}. Next follow-up: ${item.next||'—'}. Tell me what to do with this contact next — if it's a bureau, what to dispute and how; if a collector, the strategy; if a bank, what to ask (CLI, graduation, goodwill). Offer to log a call or set a reminder.`
+      : kind==='account'
+      ? `The user tapped ⭐ on this ACCOUNT. Name: "${item.name}" (${item.type}). Balance: ${fmt$(item.balance)}${item.limit?' / limit '+fmt$(item.limit):''}. Utilization: ${item.limit&&isRevolving(item)?fmtPct(acctUtil(item)):'n/a'}. Status: ${item.status}. History: ${item.history||'—'}. Notes: ${item.notes||'—'}. Give the smartest next move for THIS account specifically (pay-down target with a number, dispute, settlement, goodwill, keep-open, etc.) and offer to log a payment or add a task.`
+      : kind==='task'
+      ? `The user tapped ⭐ on this TASK and wants help. Title: "${item.title}". Due: ${item.due||'none'}. Priority: ${item.prio}. Impact: ${item.impact||'—'}. Notes: ${item.note||'—'}. Explain plainly what it means and exactly how to knock it out — concrete steps, and if it's a phone call, who to call, the number, and what to say. Then offer to take an app action (mark done, set a reminder, add a note).`
+      : `The user tapped ⭐ on this DISPUTE and wants help. Title: "${item.title}". Status: ${mailStage(item.status).label}. Tracking: ${item.tracking||'none'}. Ship date: ${item.shipDate||'—'}. Delivered: ${item.deliveredDate||'—'}. Mail-to: ${item.to} ${item.dept||''} ${item.toAddress||''}. Notes: ${item.notes||'—'}. Tell me where it stands and the single most important next step, and offer to update it (mark shipped/delivered, save tracking).`;
+    S.chat.push({ who:'ai', text:'⏳ thinking…', pending:true }); render();
+    try{ const { reply } = await askClaude(detail); S.chat = S.chat.filter(m=>!m.pending); S.chat.push({ who:'ai', text: reply }); }
+    catch(e){ S.chat = S.chat.filter(m=>!m.pending); S.chat.push({ who:'ai', text: aiItemBrief(kind, item) }); }
+    persist('AI item'); render();
+  } else {
+    S.chat.push({ who:'ai', text: aiItemBrief(kind, item) });
+    persist('AI item'); render();
+  }
+}
+
 /* ---- async send that prefers real Claude, falls back to the rule engine ---- */
 async function sendAI(){
   const inp = $('#aiinput'); const text = inp? inp.value.trim() : '';
@@ -2564,7 +2840,7 @@ async function sendAI(){
    AUTO-UPDATER — propagate any new deploy to every device
    Bump APP_BUILD on each deploy; online devices refresh themselves.
    ================================================================ */
-window.APP_BUILD = "b12-20260719";
+window.APP_BUILD = "b16-20260722";
 (function(){
   var CHECK_MS = 150000; // ~2.5 min
   function build(){ return window.APP_BUILD || ''; }
