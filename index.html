@@ -2150,7 +2150,9 @@ function runSim(){
    ⭐ CENTAURI AI — rule-based command engine
    ================================================================ */
 function vAI(){
-  $('#topbar').innerHTML = topbarHTML('⭐ Centauri AI', 'Your FICO expert. Tell it what happened — it updates everything.');
+  const smart = (typeof ccKey==='function' && ccKey());
+  $('#topbar').innerHTML = topbarHTML('⭐ Centauri AI', smart? '⚡ Powered by real Claude · understands anything, updates everything' : 'Your FICO expert. Tell it what happened — it updates everything.',
+    `<button class="btn ${smart?'':'primary'}" onclick="openAISetup()">${smart?'⚡ Claude connected':'⚡ Use real Claude'}</button>`);
   $('#view').innerHTML = `
   <div class="card chat-wrap">
     <div class="chat-scroll" id="chatscroll">
@@ -2269,18 +2271,40 @@ function intakeFile(pf, text){
   return head + `\n\nAnything else? I can log a payment, update a score, mark delivered, or add a task — just tell me.`;
 }
 function findAccount(text){
-  const t = text.toLowerCase();
-  return S.accounts.find(a =>
-    a.name.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w)) ||
-    (a.nickname && a.nickname.toLowerCase().split(/\s+/).some(w=>w.length>3 && t.includes(w))));
+  const t = ' ' + (text||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ') + ' ';
+  const GENERIC = new Set(['card','loan','credit','account','paid','line','builder','bank','usa','financial','secured','charge','off','solutions','mobility','collection','services','student','personal','one','the','and']);
+  let best=null, bestScore=0;
+  S.accounts.forEach(a=>{
+    let score=0;
+    a.name.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).forEach(w=>{
+      if(w.length>=4 && !GENERIC.has(w)){ if(t.includes(' '+w+' ')) score+=2; else if(t.includes(w)) score+=1; }
+    });
+    if(/\bsnap\b/.test(t) && /snap/i.test(a.name)) score+=3;   // "snap on" vs "Snap-On"
+    if(score>bestScore){ bestScore=score; best=a; }
+  });
+  return bestScore>0 ? best : null;
 }
 function centauriBrain(text){
   const t = text.toLowerCase();
   const money = text.match(/\$?\s?([\d,]+(?:\.\d{1,2})?)/);
   const amt = money? parseFloat(money[1].replace(/,/g,'')) : null;
 
-  /* -- payment logged: "I paid X (amount)" -- */
-  if(/\b(paid|payment|pay(ed)?)\b/.test(t) && !/should|what if|simulate|how/.test(t)){
+  /* -- court / legal / lawyer note -> task, not a payment -- */
+  if(/\bcourt\b|\bhearing\b|\blawyer\b|\battorney\b|\blawsuit\b|\bsued\b|\bsummons\b|\bsubpoena\b|\blegal\b/.test(t)){
+    const a = findAccount(t);
+    const dm = text.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})\b/);
+    let when='', due='';
+    if(dm){ let[_,mm,dd,yy]=dm; yy=yy.length===2?('20'+yy):yy; when=`${mm}/${dd}/${yy}`; due=`${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`; }
+    const title = `${a?a.name+' — ':''}Court / legal date${when?' '+when:''}`;
+    S.tasks.unshift({ id:uid('t'), emoji:'⚖️', title, prio:'high', due, impact:'legal', note:text, done:false });
+    if(a) a.notes = (a.notes?a.notes+' ':'') + `⚖️ ${text} (noted ${fmtDate(todayISO())}).`;
+    addEvent('⚖️', `<b>Legal/court note:</b> ${esc(text)}${a?` <span style="color:var(--ink-3)">(${esc(a.name)})</span>`:''}`, 'Note');
+    persist('Legal/court note');
+    return `⚖️ Got it — logged as a high-priority task${a?` on ${a.name}`:''}${when?` for ${when}`:''}, and noted it${a?' on the account':''} and in your timeline.\n\nWant me to set a reminder a few days before, or attach any documents (summons, letters) to it? Just upload them here.\n\nOne note: I track this for you, but I’m not a lawyer — lean on your paid attorney for the legal strategy itself.`;
+  }
+
+  /* -- payment logged: needs a real amount + an account, and not a legal/“paid lawyer” context -- */
+  if(/\b(paid|payment)\b/.test(t) && amt!=null && findAccount(t) && !/should|what if|simulate|how|lawyer|attorney|court/.test(t)){
     const a = findAccount(t);
     if(a){
       const amount = amt!=null && amt<=a.balance+5000? amt : a.balance;
@@ -2400,10 +2424,147 @@ render();
 </script>
 <script>
 /* ================================================================
+   ⚡ REAL CLAUDE — optional intelligent brain for Centauri AI
+   Uses the user's own Anthropic API key (stored device-local only,
+   never synced, never in the repo). Falls back to the rule engine.
+   ================================================================ */
+function ccKey(){ try{ return localStorage.getItem('cc-anthropic-key') || ''; }catch(e){ return ''; } }
+function ccModel(){ try{ return localStorage.getItem('cc-anthropic-model') || 'claude-3-5-haiku-latest'; }catch(e){ return 'claude-3-5-haiku-latest'; } }
+
+function openAISetup(){
+  const has = !!ccKey();
+  openModal(`<h2>⚡ Smarter Centauri AI <span class="x" onclick="closeModal()">✕</span></h2>
+  <div style="font-size:12.5px;color:var(--ink-2);line-height:1.6">
+    Connect your own Anthropic API key and Centauri AI becomes <b>real Claude</b> — it understands messy, natural messages and updates your profile intelligently, instead of keyword-matching.
+    <br><br>
+    Your key is stored <b>only on this device</b> (never synced, never in your public repo). Usage bills to your Anthropic account. Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
+  </div>
+  <div class="fld full" style="margin-top:14px"><label>Anthropic API key (sk-ant-…)</label><input id="ai-key" type="password" value="${esc(ccKey())}" placeholder="sk-ant-..."></div>
+  <div class="fld full"><label>Model</label><input id="ai-model" value="${esc(ccModel())}" placeholder="claude-3-5-haiku-latest"></div>
+  <div style="font-size:11px;color:var(--ink-3);margin-top:6px">Tip: <code>claude-3-5-haiku-latest</code> is fast & cheap; <code>claude-3-5-sonnet-latest</code> is smarter. You can change this anytime.</div>
+  <div class="modal-foot">
+    ${has?`<button class="btn danger sm" onclick="try{localStorage.removeItem('cc-anthropic-key')}catch(e){};closeModal();toast('Disconnected','Back to the built-in assistant');vAI&&vAI()">Disconnect</button>`:''}
+    <button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn primary" onclick="saveAIKey()">💾 Connect</button>
+  </div>`);
+}
+function saveAIKey(){
+  const k = ($('#ai-key')&&$('#ai-key').value||'').trim();
+  const m = ($('#ai-model')&&$('#ai-model').value||'').trim() || 'claude-3-5-haiku-latest';
+  try{ if(k) localStorage.setItem('cc-anthropic-key', k); localStorage.setItem('cc-anthropic-model', m); }catch(e){}
+  closeModal();
+  toast(k?'⚡ Claude connected':'Saved', k?'Centauri AI is now powered by real Claude':'', 'good');
+  if(typeof vAI==='function') vAI();
+}
+
+/* compact snapshot of the profile for Claude */
+function ccContext(){
+  const u = totalUtil();
+  const acc = S.accounts.map(a=>`${a.name} (${a.type}) bal ${fmt$(a.balance)}${a.limit?'/'+fmt$(a.limit):''} — ${a.status}`).join('; ');
+  const disp = (S.mail||[]).map(m=>`"${m.title}" [${m.status}${m.tracking?', tracking '+m.tracking:''}, ships ${m.shipDate||'?'}]`).join('; ');
+  const tasks = S.tasks.filter(t=>!t.done).map(t=>t.title).join('; ');
+  const contacts = S.contacts.map(c=>c.name).join(', ');
+  return `Name: ${S.profile.name} (${S.profile.legal||''}). FICO 8 — Equifax ${S.scores.equifax.current}, Experian ${S.scores.experian.current}, TransUnion ${S.scores.transunion.current}. Overall revolving utilization ${fmtPct(u)}. Goal ${S.profile.goalScore}.
+ACCOUNTS: ${acc}.
+DISPUTES/MAIL: ${disp||'none'}.
+CONTACTS: ${contacts}.
+OPEN TASKS: ${tasks||'none'}.
+Today is ${todayISO()}.`;
+}
+const CC_SYSTEM = `You are Centauri AI, the built-in FICO-credit assistant inside the user's personal credit command-center app. Be concise, warm, expert and practical. You are NOT a lawyer or financial advisor — add a one-line caveat only when giving legal or financial-decision guidance.
+
+You are given the user's live profile below. Use it to answer specifically (reference their real accounts, disputes, scores).
+
+When the user's message clearly implies a change to their data, append AFTER your reply a fenced code block exactly labeled \`cc-actions\` containing a JSON array of actions for the app to execute. Only include actions that clearly follow from the message. Never invent payments, scores, or dates the user didn't give.
+
+Supported actions:
+- {"type":"add_task","title":"...","prio":"high|med|low","due":"YYYY-MM-DD"(optional),"note":"...","impact":"..."(optional)}
+- {"type":"complete_task","match":"keywords of the task to check off"}
+- {"type":"add_note","target":"account|contact|dispute","match":"name keywords","note":"..."}
+- {"type":"log_payment","account":"account name keywords","amount":number}
+- {"type":"update_score","bureau":"equifax|experian|transunion","value":number}
+- {"type":"mark_shipped","dispute":"dispute keywords","tracking":"..."(optional)}
+- {"type":"add_event","emoji":"📌","text":"timeline text","tag":"Note"}
+
+If nothing should change, omit the block entirely. Keep JSON minimal and valid.`;
+
+async function askClaude(userText){
+  const key = ccKey();
+  const history = S.chat.slice(-8).filter(m=>!m.pending).map(m=>({ role: m.who==='me'?'user':'assistant', content: m.text }));
+  const messages = history.concat([{ role:'user', content: userText }]);
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{ 'content-type':'application/json', 'x-api-key':key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+    body: JSON.stringify({ model: ccModel(), max_tokens: 1024, system: CC_SYSTEM + '\n\n<profile>\n' + ccContext() + '\n</profile>', messages })
+  });
+  if(!res.ok){ let msg='HTTP '+res.status; try{ const e=await res.json(); msg=(e.error&&e.error.message)||msg; }catch(_){}}
+  if(!res.ok) throw new Error(msg);
+  const data = await res.json();
+  let out = (data.content||[]).map(c=>c.text||'').join('').trim();
+  /* extract + run actions */
+  let did = [];
+  const m = out.match(/```(?:cc-actions|json)?\s*([\s\S]*?)```/);
+  if(m){
+    out = out.replace(m[0],'').trim();
+    try{ did = execCcActions(JSON.parse(m[1].trim())); }catch(e){}
+  }
+  if(did.length) out += `\n\n✅ ${did.join('; ')}.`;
+  return { reply: out || '(no response)' };
+}
+
+/* ---- action executor ---- */
+function matchKw(hay, kw){ if(!kw) return false; hay=(hay||'').toLowerCase(); return kw.toLowerCase().split(/\s+/).some(w=>w.length>2 && hay.includes(w)); }
+function execCcActions(list){
+  const did=[];
+  (Array.isArray(list)?list:[]).forEach(a=>{
+    try{
+      if(a.type==='add_task'){ S.tasks.unshift({id:uid('t'),emoji:'⭐',title:a.title,prio:a.prio||'med',due:a.due||'',impact:a.impact||'',note:a.note||'',done:false}); addEvent('✅',`<b>Task added:</b> ${esc(a.title)}`,'Task'); did.push(`added task “${a.title}”`); }
+      else if(a.type==='complete_task'){ const t=S.tasks.find(x=>!x.done && matchKw(x.title+' '+x.note,a.match)); if(t){t.done=true; addEvent('✅',`<b>Task completed:</b> ${esc(t.title)}`,'Task'); did.push('checked off a task');} }
+      else if(a.type==='add_note'){ let tgt; if(a.target==='account') tgt=S.accounts.find(x=>matchKw(x.name+' '+x.nickname,a.match)); else if(a.target==='contact') tgt=S.contacts.find(x=>matchKw(x.name,a.match)); else if(a.target==='dispute') tgt=matchDispute(a.match||''); if(tgt){ tgt.notes=(tgt.notes?tgt.notes+' ':'')+a.note; did.push('added a note'); } }
+      else if(a.type==='log_payment'){ const acc=S.accounts.find(x=>matchKw(x.name+' '+x.nickname,a.account)); if(acc && a.amount!=null){ applyPayment(acc,+a.amount||0,false); did.push(`logged ${fmt$(+a.amount)} to ${acc.name}`); } }
+      else if(a.type==='update_score'){ const k=(a.bureau||'').toLowerCase(); if(S.scores[k] && a.value!=null){ const old=S.scores[k].current; S.scores[k].current=+a.value; S.scores[k].history.push(+a.value); S.scores[k].history=S.scores[k].history.slice(-12); S.lastUpdated=todayISO(); addEvent(+a.value>=old?'📈':'📉',`<b>${BMETA[k].label} → ${a.value}.</b>`,'Score change'); did.push(`updated ${BMETA[k].label} to ${a.value}`); } }
+      else if(a.type==='mark_shipped'){ const mm=matchDispute(a.dispute||''); if(mm){ if(a.tracking) mm.tracking=a.tracking; mm.status='shipped'; mm.shipDate=mm.shipDate||todayISO(); mm.lastChecked=todayISO(); did.push('marked a dispute shipped'); } }
+      else if(a.type==='add_event'){ addEvent(a.emoji||'📌', esc(a.text||''), a.tag||'Note'); did.push('logged a timeline event'); }
+    }catch(e){}
+  });
+  return did;
+}
+
+/* ---- async send that prefers real Claude, falls back to the rule engine ---- */
+async function sendAI(){
+  const inp = $('#aiinput'); const text = inp? inp.value.trim() : '';
+  const pf = window._aiPendingFile;
+  if(!text && !pf) return;
+  if(inp) inp.value='';
+  S.chat.push({who:'me', text: (pf?`📎 ${pf.name}\n`:'') + text});
+
+  /* file intake stays local (fast, deterministic) */
+  if(pf){ const r = intakeFile(pf, text); window._aiPendingFile=null; S.chat.push({who:'ai', text:r}); persist('AI file intake'); vAI(); return; }
+
+  if(ccKey()){
+    S.chat.push({who:'ai', text:'⏳ thinking…', pending:true}); persist('AI'); vAI();
+    try{
+      const { reply } = await askClaude(text);
+      S.chat = S.chat.filter(m=>!m.pending);
+      S.chat.push({who:'ai', text: reply});
+    }catch(e){
+      S.chat = S.chat.filter(m=>!m.pending);
+      S.chat.push({who:'ai', text: `⚠️ Couldn’t reach Claude (${e.message||'error'}). Check your key in ⚡ settings. Using the built-in assistant for now:\n\n` + centauriBrain(text)});
+    }
+    persist('AI'); vAI(); return;
+  }
+
+  const reply = centauriBrain(text);
+  S.chat.push({who:'ai', text: reply});
+  persist('AI'); vAI();
+}
+</script>
+<script>
+/* ================================================================
    AUTO-UPDATER — propagate any new deploy to every device
    Bump APP_BUILD on each deploy; online devices refresh themselves.
    ================================================================ */
-window.APP_BUILD = "b11-20260719";
+window.APP_BUILD = "b12-20260719";
 (function(){
   var CHECK_MS = 150000; // ~2.5 min
   function build(){ return window.APP_BUILD || ''; }
